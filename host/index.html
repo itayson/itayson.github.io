@@ -3,37 +3,59 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Tayson PS4 PS5 - Exploit Host</title>
+<meta name="theme-color" content="#020815">
+<title>Tayson PS4 webkit - Exploit Host</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="container">
-    <header>
-        <h1 class="main-title">
-            <span class="highlight">Tayson</span>
-            <span class="ps4-text">PS4</span>
-            <span class="ps5-text">PS5</span>
-        </h1>
-        <div class="subtitle">Exploit Host</div>
-        <div class="version-badge">JB v3.0</div>
-    </header>
-    
-    <hr class="separator">
+<div class="space-grid" aria-hidden="true"></div>
 
-    <div id="menu">
-        <h2 class="fw-title">Firmware Detection</h2>
-        <p class="fw-range">Detecting <span class="range-highlight">PlayStation 4</span></p>
-        
-        <div class="status-bar">
-            <span id="msgs" class="status-text loading">⏳ Starting...</span>
+<main class="page-shell">
+    <header class="hero">
+        <div class="ps-symbol" aria-hidden="true">PS</div>
+
+        <h1 class="main-title">Tayson PS4 webkit</h1>
+
+        <div class="subtitle-row">
+            <span class="neon-line"></span>
+            <div class="subtitle">Exploit Host</div>
+            <span class="neon-line"></span>
         </div>
 
-        <footer>
-            <p class="credit">Designed by <a href="#" class="credit-link">Tayson</a></p>
-            <p class="thanks">❤️ Special thanks to all scene developers</p>
-        </footer>
-    </div>
-</div>
+        <div class="version-badge">JB v3.0</div>
+    </header>
+
+    <section id="menu" class="detector-card">
+        <div class="scan-icon" aria-hidden="true"></div>
+
+        <h2 class="fw-title">Firmware Detection</h2>
+        <div class="card-divider"><span></span></div>
+
+        <p class="fw-range">Detecting <span class="range-highlight">PlayStation 4</span></p>
+
+        <div class="status-bar">
+            <span id="msgs" class="status-text loading">Starting...</span>
+            <div class="progress-track" aria-hidden="true">
+                <span class="progress-fill"></span>
+                <span class="progress-glow"></span>
+            </div>
+        </div>
+    </section>
+
+    <footer class="site-footer">
+        <div class="footer-item">
+            <span class="footer-icon crown">♛</span>
+            <span>Designed by <a href="#" class="credit-link">Tayson</a></span>
+        </div>
+
+        <span class="footer-divider"></span>
+
+        <div class="footer-item thanks">
+            <span class="footer-icon heart">♥</span>
+            <span>Special thanks to all scene developers</span>
+        </div>
+    </footer>
+</main>
 
 <script>
     var msgs = document.getElementById('msgs');
@@ -42,29 +64,27 @@
         msgs.innerHTML = msg;
     }
 
-    // ========== كاش ==========
     var appCache = window.applicationCache;
     if (appCache) {
         appCache.addEventListener('updateready', function() {
             try { appCache.swapCache(); } catch(e) {}
-            updateStatus('🔄 Update ready -- reloading...');
+            updateStatus('Update ready — reloading...');
             setTimeout(function() { location.reload(); }, 500);
         }, false);
-        
+
         appCache.addEventListener('cached', function() {
-            updateStatus('✅ Cached -- running...');
+            updateStatus('Cached — running...');
         }, false);
-        
+
         appCache.addEventListener('noupdate', function() {
-            updateStatus('✅ Cache ready -- running...');
+            updateStatus('Cache ready — running...');
         }, false);
-        
+
         appCache.addEventListener('error', function() {
-            updateStatus('⚠️ Cache error -- running anyway...');
+            updateStatus('Cache error — running anyway...');
         }, false);
     }
 
-    // ========== قراءة الإصدار ==========
     var uaFull = navigator.userAgent;
     var match = uaFull.match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
     var isPS4 = match !== null;
@@ -88,25 +108,27 @@
 
     document.addEventListener("DOMContentLoaded", function() {
         if (!isPS4) {
-            updateStatus('⚠️ This page is for PS4 only!');
+            updateStatus('This page is for PS4 only!');
             msgs.className = 'status-text error';
             return;
         }
 
         if (bug === "lapse") {
-            updateStatus('✅ Detected PS4 Firmware: ' + fwVersion);
+            updateStatus('Detected PS4 Firmware: ' + fwVersion);
+            msgs.className = 'status-text success';
             setTimeout(function() {
-                updateStatus('🚀 Loading Lapse exploit...');
+                updateStatus('Loading Lapse exploit...');
                 window.location.replace('run_lapse.html?bug=lapse');
             }, 1500);
         } else if (bug === "poops") {
-            updateStatus('✅ Detected PS4 Firmware: ' + fwVersion);
+            updateStatus('Detected PS4 Firmware: ' + fwVersion);
+            msgs.className = 'status-text success';
             setTimeout(function() {
-                updateStatus('🚀 Loading Poops exploit...');
+                updateStatus('Loading Poops exploit...');
                 window.location.replace('run_poops.html?bug=poops');
             }, 1500);
         } else {
-            updateStatus('❌ Unsupported Firmware: ' + fwVersion);
+            updateStatus('Unsupported Firmware: ' + fwVersion);
             msgs.className = 'status-text error';
         }
     });
