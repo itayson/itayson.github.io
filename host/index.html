@@ -1,86 +1,115 @@
 <!DOCTYPE html>
-<html lang="pt-BR" manifest="cache-v6.appcache">
+<html lang="en" manifest="cache.appcache">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0b0d10">
-<title>Tayson PS4 webkit</title>
-<style>
-*{box-sizing:border-box}
-html,body{margin:0;min-height:100%;background:#0b0d10;color:#f5f7fa;font-family:Arial,Helvetica,sans-serif}
-body{display:table;width:100%;height:100vh}
-main{display:table-cell;vertical-align:middle;text-align:center;padding:24px}
-.wrap{width:520px;max-width:92%;margin:0 auto}
-h1{margin:0 0 10px;font-size:42px;font-weight:700;letter-spacing:-1px}
-.sub{margin:0 0 30px;color:#7d8794;font-size:14px}
-.status{padding:17px 18px;border:1px solid #242a31;border-radius:10px;background:#111419;font-size:15px;color:#cfd6df}
-#fw{display:block;margin-top:7px;color:#4aa3ff;font-weight:700}
-.line{width:56px;height:3px;margin:24px auto 0;border-radius:3px;background:#2c8cff}
-.error{color:#ff6b75!important}
-.success{color:#63d98b!important}
-footer{margin-top:28px;color:#555f6b;font-size:12px}
-</style>
+<title>Tayson PS4 webkit - Exploit Host</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<main>
-  <div class="wrap">
-    <h1>Tayson PS4 webkit</h1>
-    <p class="sub">Exploit Host</p>
+<div class="container">
+    <header>
+        <h1 class="main-title">
+            <span class="highlight">Tayson</span>
+            <span class="ps4-text">PS4</span>
+            <span class="ps5-text">webkit</span>
+        </h1>
+        <div class="subtitle">Exploit Host</div>
+        <div class="version-badge">JB v3.0</div>
+    </header>
+    
+    <hr class="separator">
 
-    <div class="status">
-      <span id="msg">Detectando firmware...</span>
-      <span id="fw">Aguarde</span>
+    <div id="menu">
+        <h2 class="fw-title">Firmware Detection</h2>
+        <p class="fw-range">Detecting <span class="range-highlight">PlayStation 4</span></p>
+        
+        <div class="status-bar">
+            <span id="msgs" class="status-text loading">⏳ Starting...</span>
+        </div>
+
+        <footer>
+            <p class="credit">Designed by <a href="#" class="credit-link">Tayson</a></p>
+            <p class="thanks">❤️ Special thanks to all scene developers</p>
+        </footer>
     </div>
-
-    <div class="line"></div>
-    <footer>Tayson</footer>
-  </div>
-</main>
+</div>
 
 <script>
-var msg=document.getElementById('msg');
-var fw=document.getElementById('fw');
+    var msgs = document.getElementById('msgs');
 
-function setStatus(text,version,cls){
-  msg.innerHTML=text;
-  fw.innerHTML=version||'';
-  fw.className=cls||'';
-}
+    function updateStatus(msg) {
+        msgs.innerHTML = msg;
+    }
 
-var appCache=window.applicationCache;
-if(appCache){
-  appCache.addEventListener('updateready',function(){
-    try{appCache.swapCache();}catch(e){}
-    setTimeout(function(){location.reload();},400);
-  },false);
-}
+    // ========== كاش ==========
+    var appCache = window.applicationCache;
+    if (appCache) {
+        appCache.addEventListener('updateready', function() {
+            try { appCache.swapCache(); } catch(e) {}
+            updateStatus('🔄 Update ready -- reloading...');
+            setTimeout(function() { location.reload(); }, 500);
+        }, false);
+        
+        appCache.addEventListener('cached', function() {
+            updateStatus('✅ Cached -- running...');
+        }, false);
+        
+        appCache.addEventListener('noupdate', function() {
+            updateStatus('✅ Cache ready -- running...');
+        }, false);
+        
+        appCache.addEventListener('error', function() {
+            updateStatus('⚠️ Cache error -- running anyway...');
+        }, false);
+    }
 
-var ua=navigator.userAgent;
-var m=ua.match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
+    // ========== قراءة الإصدار ==========
+    var uaFull = navigator.userAgent;
+    var match = uaFull.match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
+    var isPS4 = match !== null;
+    var fwVersion = isPS4 ? match[1] + "." + match[2] : "Unknown";
+    var fwNum = parseFloat(fwVersion);
+    var key = null;
+    var bug = null;
 
-document.addEventListener('DOMContentLoaded',function(){
-  if(!m){
-    setStatus('Este host foi feito para PS4.','Navegador não compatível','error');
-    return;
-  }
+    if (match) {
+        key = match[1] + "." + match[2];
+        fwNum = parseInt(match[1], 10) * 100 + parseInt(match[2], 10);
+    }
 
-  var version=m[1]+'.'+m[2];
-  var n=parseInt(m[1],10)*100+parseInt(m[2],10);
+    if (isPS4) {
+        if (fwNum <= 1202) {
+            bug = "lapse";
+        } else if (fwNum >= 1250) {
+            bug = "poops";
+        }
+    }
 
-  if(n<=1202){
-    setStatus('Firmware detectado','FW '+version,'success');
-    setTimeout(function(){window.location.replace('run_lapse.html?bug=lapse');},1200);
-    return;
-  }
+    document.addEventListener("DOMContentLoaded", function() {
+        if (!isPS4) {
+            updateStatus('⚠️ This page is for PS4 only!');
+            msgs.className = 'status-text error';
+            return;
+        }
 
-  if(n>=1250){
-    setStatus('Firmware detectado','FW '+version,'success');
-    setTimeout(function(){window.location.replace('run_poops.html?bug=poops');},1200);
-    return;
-  }
-
-  setStatus('Firmware não suportado','FW '+version,'error');
-},false);
+        if (bug === "lapse") {
+            updateStatus('✅ Detected PS4 Firmware: ' + fwVersion);
+            setTimeout(function() {
+                updateStatus('🚀 Loading Lapse exploit...');
+                window.location.replace('run_lapse.html?bug=lapse');
+            }, 1500);
+        } else if (bug === "poops") {
+            updateStatus('✅ Detected PS4 Firmware: ' + fwVersion);
+            setTimeout(function() {
+                updateStatus('🚀 Loading Poops exploit...');
+                window.location.replace('run_poops.html?bug=poops');
+            }, 1500);
+        } else {
+            updateStatus('❌ Unsupported Firmware: ' + fwVersion);
+            msgs.className = 'status-text error';
+        }
+    });
 </script>
 </body>
 </html>

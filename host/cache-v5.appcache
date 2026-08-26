@@ -1,8 +1,9 @@
 CACHE MANIFEST
-# migrate-to-minimal-v6-20260826
+# migrate-to-original-20260826
 
 index.html
-cache-v6.appcache
+style.css
+cache.appcache
 run_lapse.html
 run_poops.html
 
