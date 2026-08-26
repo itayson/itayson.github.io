@@ -1,7 +1,7 @@
 CACHE MANIFEST
-# build 20260826-2
+# build 20260826-3
 
-index.html #2d0ac397bb3509d4b1dab26ebdba86e6ea063f8979b2ff95a2c57e7feeae28f0
+index.html #tayson-neon-layout-v1
 run_lapse.html #6061b29c8c2af1d3c6c6e2843ab0dc15fef70a19d6ad94c70a3b19d70896546f
 run_poops.html #fa0beee58f8e29fdc62861c55f78916f4d9711b66696aacd311f4edd7f2b5c21
 chain_lapse.js #fd0cc044e03be88d1c89089a7d8dbb2d2c9ea2f3a485f0ab9089bb36d92d1a34
@@ -11,7 +11,7 @@ mem.js #4a1b688e8061372bc8400e911c8e191b7e19e4b6286dcdeb3eef4971c5168a22
 int64.js #a79a3334a3f2c75b9a238ab1093796e326251c97ac5d02663eae5b14bf80f652
 ps4_offsets.js #1edbbc68e5b37de8d18755c9250736c0db9524bccda87f226f738c4f0daa8fcb
 rpc_worker.js #483925eafec03037596a71b95f046ba0ed1ab9018300ffd5ff718e2ce8c181dd
-style.css #d41d8cd98f00b204e9800998ecf8427e
+style.css #tayson-neon-layout-v1
 logo_raw.png #23cdc5f24ffd3508d2ca7c71fcdae5bd7fbe2718dad9393964957a930f3f02a5
 payload.bin #c6329401d1810e16c84e6474ac30977dbdc951987c10cdb559370de7d59db0b0
 patches/1100.bin #15497a2b748dafd49bfb89c51ed048d0c5ba3c5092c5254da46dd4443f80983b
