@@ -1,137 +1,133 @@
 <!DOCTYPE html>
-<html lang="en" manifest="cache-v4.appcache">
+<html lang="pt-BR" manifest="cache-v5.appcache">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#020815">
-<title>Tayson PS4 webkit - Exploit Host</title>
-<link rel="stylesheet" href="style-v4.css">
+<meta name="theme-color" content="#030c1d">
+<title>Tayson PS4 webkit</title>
+<link rel="stylesheet" href="style-v5.css">
 </head>
 <body>
-<div class="space-grid" aria-hidden="true"></div>
+<div class="page">
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-badge">T</span>
+    <span class="brand-pad">●</span>
+    <span class="brand-name">Tayson PS4 webkit</span>
+  </div>
+  <nav class="nav">
+    <a href="#top" class="active">Início</a>
+    <a href="#recursos">Recursos</a>
+    <a href="#tutorial">Tutorial</a>
+    <a href="#status">Status</a>
+  </nav>
+  <a class="panel-btn" href="#painel">Painel</a>
+</header>
 
-<main class="page-shell">
-    <header class="hero">
-        <div class="ps-symbol" aria-hidden="true">PS</div>
+<section class="hero" id="top">
+  <div class="hero-copy">
+    <div class="tag">Potência &amp; Estabilidade</div>
+    <h1><span>Tayson</span><strong>PS4 webkit</strong></h1>
+    <p>Host leve, rápido e otimizado para o navegador do PlayStation 4.</p>
 
-        <h1 class="main-title">Tayson PS4 webkit</h1>
+    <div class="actions">
+      <a href="#painel" class="btn primary" onclick="return launchNow();">COMEÇAR AGORA</a>
+      <a href="#recursos" class="btn secondary">VER RECURSOS</a>
+    </div>
 
-        <div class="subtitle-row">
-            <span class="neon-line"></span>
-            <div class="subtitle">Exploit Host</div>
-            <span class="neon-line"></span>
-        </div>
+    <div class="detect-panel" id="painel">
+      <div class="detect-head">
+        <span>Firmware Detection</span>
+        <b id="fw-info">Auto Detect</b>
+      </div>
+      <div id="msgs" class="status-text loading">Iniciando host...</div>
+      <div class="progress"><span></span></div>
+    </div>
+  </div>
 
-        <div class="version-badge">JB v3.0</div>
-    </header>
+  <div class="hero-art" aria-hidden="true">
+    <div class="halo"></div>
+    <div class="controller">
+      <div class="pad-body"></div>
+      <div class="touch"></div>
+      <i class="d1"></i><i class="d2"></i><i class="d3"></i><i class="d4"></i>
+      <i class="stick s1"></i><i class="stick s2"></i>
+      <i class="face f1"></i><i class="face f2"></i><i class="face f3"></i><i class="face f4"></i>
+      <div class="light"></div>
+    </div>
+  </div>
+</section>
 
-    <section id="menu" class="detector-card">
-        <div class="scan-icon" aria-hidden="true"></div>
+<section class="features" id="recursos">
+  <div class="card"><div class="icon">◷</div><h3>Cache Offline</h3><p>Arquivos essenciais disponíveis após o primeiro carregamento.</p></div>
+  <div class="card"><div class="icon">⚡</div><h3>Alta Performance</h3><p>Sem frameworks externos e com poucos efeitos pesados.</p></div>
+  <div class="card" id="tutorial"><div class="icon">◆</div><h3>Detecção Automática</h3><p>Identifica o firmware do PS4 e seleciona a rota compatível.</p></div>
+  <div class="card"><div class="icon">◎</div><h3>Interface PS4</h3><p>Layout pensado para resolução e WebKit do console.</p></div>
+</section>
 
-        <h2 class="fw-title">Firmware Detection</h2>
-        <div class="card-divider"><span></span></div>
-
-        <p class="fw-range">Detecting <span class="range-highlight">PlayStation 4</span></p>
-
-        <div class="status-bar">
-            <span id="msgs" class="status-text loading">Starting...</span>
-            <div class="progress-track" aria-hidden="true">
-                <span class="progress-fill"></span>
-                <span class="progress-glow"></span>
-            </div>
-        </div>
-    </section>
-
-    <footer class="site-footer">
-        <div class="footer-item">
-            <span class="footer-icon crown">♛</span>
-            <span>Designed by <a href="#" class="credit-link">Tayson</a></span>
-        </div>
-
-        <span class="footer-divider"></span>
-
-        <div class="footer-item thanks">
-            <span class="footer-icon heart">♥</span>
-            <span>Special thanks to all scene developers</span>
-        </div>
-    </footer>
-</main>
+<footer class="bottom" id="status">
+  <span>Status do Host: <b class="online">ONLINE</b></span>
+  <span class="right">Tayson PS4 webkit</span>
+</footer>
+</div>
 
 <script>
-    var msgs = document.getElementById('msgs');
+var msgs=document.getElementById('msgs');
+var fwInfo=document.getElementById('fw-info');
+var targetBug=null;
 
-    function updateStatus(msg) {
-        msgs.innerHTML = msg;
-    }
+function updateStatus(msg,type){
+  msgs.innerHTML=msg;
+  msgs.className='status-text '+(type||'loading');
+}
+function launchNow(){
+  if(targetBug==='lapse'){
+    updateStatus('Abrindo Lapse...','success');
+    window.location.replace('run_lapse.html?bug=lapse');
+    return false;
+  }
+  if(targetBug==='poops'){
+    updateStatus('Abrindo Poops...','success');
+    window.location.replace('run_poops.html?bug=poops');
+    return false;
+  }
+  return false;
+}
 
-    var appCache = window.applicationCache;
-    if (appCache) {
-        appCache.addEventListener('updateready', function() {
-            try { appCache.swapCache(); } catch(e) {}
-            updateStatus('Update ready — reloading...');
-            setTimeout(function() { location.reload(); }, 500);
-        }, false);
+var appCache=window.applicationCache;
+if(appCache){
+  appCache.addEventListener('updateready',function(){
+    try{appCache.swapCache();}catch(e){}
+    updateStatus('Atualização pronta. Recarregando...','success');
+    setTimeout(function(){location.reload();},700);
+  },false);
+  appCache.addEventListener('cached',function(){updateStatus('Cache offline pronto.','success');},false);
+}
 
-        appCache.addEventListener('cached', function() {
-            updateStatus('Cached — running...');
-        }, false);
+var ua=navigator.userAgent;
+var m=ua.match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
+var isPS4=m!==null;
+var fw=isPS4?(m[1]+'.'+m[2]):'Unknown';
+var fwNum=0;
+if(m){fwNum=parseInt(m[1],10)*100+parseInt(m[2],10);}
+if(isPS4){
+  if(fwNum<=1202) targetBug='lapse';
+  else if(fwNum>=1250) targetBug='poops';
+}
 
-        appCache.addEventListener('noupdate', function() {
-            updateStatus('Cache ready — running...');
-        }, false);
-
-        appCache.addEventListener('error', function() {
-            updateStatus('Cache error — running anyway...');
-        }, false);
-    }
-
-    var uaFull = navigator.userAgent;
-    var match = uaFull.match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
-    var isPS4 = match !== null;
-    var fwVersion = isPS4 ? match[1] + "." + match[2] : "Unknown";
-    var fwNum = parseFloat(fwVersion);
-    var key = null;
-    var bug = null;
-
-    if (match) {
-        key = match[1] + "." + match[2];
-        fwNum = parseInt(match[1], 10) * 100 + parseInt(match[2], 10);
-    }
-
-    if (isPS4) {
-        if (fwNum <= 1202) {
-            bug = "lapse";
-        } else if (fwNum >= 1250) {
-            bug = "poops";
-        }
-    }
-
-    document.addEventListener("DOMContentLoaded", function() {
-        if (!isPS4) {
-            updateStatus('This page is for PS4 only!');
-            msgs.className = 'status-text error';
-            return;
-        }
-
-        if (bug === "lapse") {
-            updateStatus('Detected PS4 Firmware: ' + fwVersion);
-            msgs.className = 'status-text success';
-            setTimeout(function() {
-                updateStatus('Loading Lapse exploit...');
-                window.location.replace('run_lapse.html?bug=lapse');
-            }, 1500);
-        } else if (bug === "poops") {
-            updateStatus('Detected PS4 Firmware: ' + fwVersion);
-            msgs.className = 'status-text success';
-            setTimeout(function() {
-                updateStatus('Loading Poops exploit...');
-                window.location.replace('run_poops.html?bug=poops');
-            }, 1500);
-        } else {
-            updateStatus('Unsupported Firmware: ' + fwVersion);
-            msgs.className = 'status-text error';
-        }
-    });
+document.addEventListener('DOMContentLoaded',function(){
+  if(!isPS4){
+    fwInfo.innerHTML='Somente PS4';
+    updateStatus('Abra esta página no navegador do PS4.','error');
+    return;
+  }
+  fwInfo.innerHTML='FW '+fw;
+  if(targetBug){
+    updateStatus('Firmware '+fw+' detectado. Pronto para iniciar.','success');
+  }else{
+    updateStatus('Firmware não suportado: '+fw,'error');
+  }
+},false);
 </script>
 </body>
 </html>
