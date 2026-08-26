@@ -1,132 +1,85 @@
 <!DOCTYPE html>
-<html lang="pt-BR" manifest="cache-v5.appcache">
+<html lang="pt-BR" manifest="cache-v6.appcache">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#030c1d">
+<meta name="theme-color" content="#0b0d10">
 <title>Tayson PS4 webkit</title>
-<link rel="stylesheet" href="style-v5.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#0b0d10;color:#f5f7fa;font-family:Arial,Helvetica,sans-serif}
+body{display:table;width:100%;height:100vh}
+main{display:table-cell;vertical-align:middle;text-align:center;padding:24px}
+.wrap{width:520px;max-width:92%;margin:0 auto}
+h1{margin:0 0 10px;font-size:42px;font-weight:700;letter-spacing:-1px}
+.sub{margin:0 0 30px;color:#7d8794;font-size:14px}
+.status{padding:17px 18px;border:1px solid #242a31;border-radius:10px;background:#111419;font-size:15px;color:#cfd6df}
+#fw{display:block;margin-top:7px;color:#4aa3ff;font-weight:700}
+.line{width:56px;height:3px;margin:24px auto 0;border-radius:3px;background:#2c8cff}
+.error{color:#ff6b75!important}
+.success{color:#63d98b!important}
+footer{margin-top:28px;color:#555f6b;font-size:12px}
+</style>
 </head>
 <body>
-<div class="page">
-<header class="topbar">
-  <div class="brand">
-    <span class="brand-badge">T</span>
-    <span class="brand-pad">●</span>
-    <span class="brand-name">Tayson PS4 webkit</span>
-  </div>
-  <nav class="nav">
-    <a href="#top" class="active">Início</a>
-    <a href="#recursos">Recursos</a>
-    <a href="#tutorial">Tutorial</a>
-    <a href="#status">Status</a>
-  </nav>
-  <a class="panel-btn" href="#painel">Painel</a>
-</header>
+<main>
+  <div class="wrap">
+    <h1>Tayson PS4 webkit</h1>
+    <p class="sub">Exploit Host</p>
 
-<section class="hero" id="top">
-  <div class="hero-copy">
-    <div class="tag">Potência &amp; Estabilidade</div>
-    <h1><span>Tayson</span><strong>PS4 webkit</strong></h1>
-    <p>Host leve, rápido e otimizado para o navegador do PlayStation 4.</p>
-
-    <div class="actions">
-      <a href="#painel" class="btn primary" onclick="return launchNow();">COMEÇAR AGORA</a>
-      <a href="#recursos" class="btn secondary">VER RECURSOS</a>
+    <div class="status">
+      <span id="msg">Detectando firmware...</span>
+      <span id="fw">Aguarde</span>
     </div>
 
-    <div class="detect-panel" id="painel">
-      <div class="detect-head">
-        <span>Firmware Detection</span>
-        <b id="fw-info">Auto Detect</b>
-      </div>
-      <div id="msgs" class="status-text loading">Iniciando host...</div>
-      <div class="progress"><span></span></div>
-    </div>
+    <div class="line"></div>
+    <footer>Tayson</footer>
   </div>
-
-  <div class="hero-art" aria-hidden="true">
-    <div class="halo"></div>
-    <div class="controller">
-      <div class="pad-body"></div>
-      <div class="touch"></div>
-      <i class="d1"></i><i class="d2"></i><i class="d3"></i><i class="d4"></i>
-      <i class="stick s1"></i><i class="stick s2"></i>
-      <i class="face f1"></i><i class="face f2"></i><i class="face f3"></i><i class="face f4"></i>
-      <div class="light"></div>
-    </div>
-  </div>
-</section>
-
-<section class="features" id="recursos">
-  <div class="card"><div class="icon">◷</div><h3>Cache Offline</h3><p>Arquivos essenciais disponíveis após o primeiro carregamento.</p></div>
-  <div class="card"><div class="icon">⚡</div><h3>Alta Performance</h3><p>Sem frameworks externos e com poucos efeitos pesados.</p></div>
-  <div class="card" id="tutorial"><div class="icon">◆</div><h3>Detecção Automática</h3><p>Identifica o firmware do PS4 e seleciona a rota compatível.</p></div>
-  <div class="card"><div class="icon">◎</div><h3>Interface PS4</h3><p>Layout pensado para resolução e WebKit do console.</p></div>
-</section>
-
-<footer class="bottom" id="status">
-  <span>Status do Host: <b class="online">ONLINE</b></span>
-  <span class="right">Tayson PS4 webkit</span>
-</footer>
-</div>
+</main>
 
 <script>
-var msgs=document.getElementById('msgs');
-var fwInfo=document.getElementById('fw-info');
-var targetBug=null;
+var msg=document.getElementById('msg');
+var fw=document.getElementById('fw');
 
-function updateStatus(msg,type){
-  msgs.innerHTML=msg;
-  msgs.className='status-text '+(type||'loading');
-}
-function launchNow(){
-  if(targetBug==='lapse'){
-    updateStatus('Abrindo Lapse...','success');
-    window.location.replace('run_lapse.html?bug=lapse');
-    return false;
-  }
-  if(targetBug==='poops'){
-    updateStatus('Abrindo Poops...','success');
-    window.location.replace('run_poops.html?bug=poops');
-    return false;
-  }
-  return false;
+function setStatus(text,version,cls){
+  msg.innerHTML=text;
+  fw.innerHTML=version||'';
+  fw.className=cls||'';
 }
 
 var appCache=window.applicationCache;
 if(appCache){
   appCache.addEventListener('updateready',function(){
     try{appCache.swapCache();}catch(e){}
-    updateStatus('Atualização pronta. Recarregando...','success');
-    setTimeout(function(){location.reload();},700);
+    setTimeout(function(){location.reload();},400);
   },false);
-  appCache.addEventListener('cached',function(){updateStatus('Cache offline pronto.','success');},false);
 }
 
 var ua=navigator.userAgent;
 var m=ua.match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
-var isPS4=m!==null;
-var fw=isPS4?(m[1]+'.'+m[2]):'Unknown';
-var fwNum=0;
-if(m){fwNum=parseInt(m[1],10)*100+parseInt(m[2],10);}
-if(isPS4){
-  if(fwNum<=1202) targetBug='lapse';
-  else if(fwNum>=1250) targetBug='poops';
-}
 
 document.addEventListener('DOMContentLoaded',function(){
-  if(!isPS4){
-    fwInfo.innerHTML='Somente PS4';
-    updateStatus('Abra esta página no navegador do PS4.','error');
+  if(!m){
+    setStatus('Este host foi feito para PS4.','Navegador não compatível','error');
     return;
   }
-  fwInfo.innerHTML='FW '+fw;
-  if(targetBug){
-    updateStatus('Firmware '+fw+' detectado. Pronto para iniciar.','success');
-  }else{
-    updateStatus('Firmware não suportado: '+fw,'error');
+
+  var version=m[1]+'.'+m[2];
+  var n=parseInt(m[1],10)*100+parseInt(m[2],10);
+
+  if(n<=1202){
+    setStatus('Firmware detectado','FW '+version,'success');
+    setTimeout(function(){window.location.replace('run_lapse.html?bug=lapse');},1200);
+    return;
   }
+
+  if(n>=1250){
+    setStatus('Firmware detectado','FW '+version,'success');
+    setTimeout(function(){window.location.replace('run_poops.html?bug=poops');},1200);
+    return;
+  }
+
+  setStatus('Firmware não suportado','FW '+version,'error');
 },false);
 </script>
 </body>
