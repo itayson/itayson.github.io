@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" manifest="lapse.manifest">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tayson PS4 webkit</title>
+<style>
+html,body{margin:0;background:#0b0f18;color:#c9d5e4;font:16px Arial,Helvetica,sans-serif}
+body{padding:18px}
+#state{font-size:22px;font-weight:700;line-height:1.4}
+#console,#out{display:none}
+.success,.ok{color:#71d99b}
+.warning,.warn{color:#f0c46a}
+.error,.bad{color:#ff6b6b}
+#manual-box{margin-top:14px}
+#manual-start{padding:10px 14px;border:1px solid #8a6b2d;background:#121821;color:#f0c46a;font-weight:700}
+</style>
+</head>
+<body>
+<div id="state">Checking firmware...</div>
+<div id="out"></div>
+<div id="manual-box" style="display:none">
+<button id="manual-start" type="button">Start experimental test</button>
+</div>
+<script src="host-config.js"></script>
+<script>
+(function(){
+"use strict";
+var stateEl=document.getElementById("state");
+var config=window.TaysonHostConfig;
+var m=(navigator.userAgent||"").match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
+var fw=m?m[1]+"."+m[2]:"";
+var route=config&&config.resolveRoute?config.resolveRoute(fw):null;
+var family=config&&config.families?config.families["lapse"]:null;
+
+function moduleFailed(){
+ if(family){try{localStorage.removeItem(family.cacheKey);}catch(e){}}
+ stateEl.textContent="Required local module failed to load · opening recovery...";
+ stateEl.className="error";
+ setTimeout(function(){
+  location.replace("recovery.html?code=MODULE_LOAD_FAILED&family=lapse&fw="+encodeURIComponent(fw||"unknown")+"&detail="+encodeURIComponent("chain_lapse.js"));
+ },700);
+}
+
+if(!config||!family){
+ stateEl.textContent="Host configuration is unavailable.";
+ stateEl.className="error";
+ return;
+}
+if(!route||route.family!=="lapse"){
+ stateEl.textContent=fw?"PS4 "+fw+" · Lapse route unavailable.":"PlayStation 4 required.";
+ stateEl.className="warning";
+ return;
+}
+
+window.__taysonModuleFailed=moduleFailed;
+
+function loadChain(){
+ stateEl.textContent="PS4 "+fw+" · loading Lapse...";
+ stateEl.className=route.verified?"success":"warning";
+ var s=document.createElement("script");
+ s.type="module";
+ s.textContent='import("./chain_lapse.js").catch(function(){window.__taysonModuleFailed();});';
+ document.body.appendChild(s);
+}
+
+if(!route.verified&&route.experimental){
+ stateEl.textContent="PS4 "+fw+" · experimental Lapse test ready.";
+ stateEl.className="warning";
+ var box=document.getElementById("manual-box");
+ var button=document.getElementById("manual-start");
+ box.style.display="block";
+ button.onclick=function(){
+  button.disabled=true;
+  box.style.display="none";
+  loadChain();
+ };
+ return;
+}
+if(!route.verified){
+ stateEl.textContent="PS4 "+fw+" · automatic loading blocked.";
+ stateEl.className="warning";
+ return;
+}
+loadChain();
+}());
+</script>
+</body>
+</html>

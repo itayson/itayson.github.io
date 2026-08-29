@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tayson PS4 webkit - Recovery</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1 class="main-title">
+            <span class="highlight">Tayson</span>
+            <span class="ps4-text">PS4</span>
+            <span class="webkit-text">webkit</span>
+        </h1>
+        <div class="subtitle">Recovery</div>
+        <div class="version-badge">Error assistant</div>
+    </header>
+
+    <hr class="separator">
+
+    <main id="menu">
+        <div class="recovery-code">Error code: <strong id="error-code">UNKNOWN</strong></div>
+
+        <div class="status-bar">
+            <span id="recovery-title" class="status-text error">Checking error...</span>
+        </div>
+
+        <div class="recovery-panel">
+            <p id="recovery-description"></p>
+            <ol id="recovery-steps"></ol>
+        </div>
+
+        <p id="recovery-detail" class="compatibility-note"></p>
+
+        <div class="action-group">
+            <a id="repair-link" class="action-link primary-action" href="index.html">Reinstall family cache</a>
+            <a class="action-link" href="diagnostics.html">Diagnostics</a>
+            <a class="action-link" href="index.html">Return to host</a>
+        </div>
+
+        <footer>
+            <p class="credit">Designed by <span class="credit-link">Tayson</span></p>
+        </footer>
+    </main>
+</div>
+
+<script src="host-config.js"></script>
+<script>
+(function () {
+    "use strict";
+
+    var config = window.TaysonHostConfig;
+    var LAST_ERROR_KEY = "tayson_last_recovery_code";
+
+    function queryValue(name) {
+        var query = window.location.search.replace(/^\?/, "").split("&");
+        var i, pair;
+        for (i = 0; i < query.length; i++) {
+            pair = query[i].split("=");
+            if (decodeURIComponent(pair[0] || "") === name) {
+                return decodeURIComponent((pair.slice(1).join("=") || "").replace(/\+/g, " "));
+            }
+        }
+        return "";
+    }
+
+    function setText(id, value) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = value;
+    }
+
+    function addStep(text) {
+        var list = document.getElementById("recovery-steps");
+        var item = document.createElement("li");
+        item.textContent = text;
+        list.appendChild(item);
+    }
+
+    var code = queryValue("code") || "UNKNOWN";
+    var detail = queryValue("detail");
+    var fw = queryValue("fw");
+    var familyKey = queryValue("family");
+    var family = config && config.families ? config.families[familyKey] : null;
+    var repairLink = document.getElementById("repair-link");
+
+    try { window.localStorage.setItem(LAST_ERROR_KEY, code); } catch (e) {}
+
+    setText("error-code", code);
+
+    if (code === "CACHE_STALE") {
+        setText("recovery-title", "Offline cache did not update correctly.");
+        setText("recovery-description", "The selected firmware family still has an older cache build after repeated repair attempts.");
+        addStep("Select Reinstall family cache below.");
+        addStep("Let installation reach completion before closing the browser.");
+        addStep("If the same error returns, clear PS4 browser website data once and reopen the host.");
+    } else if (code === "CACHE_INSTALL_FAILED") {
+        setText("recovery-title", "Offline cache installation failed.");
+        setText("recovery-description", "The browser reported an Application Cache installation error.");
+        addStep("Confirm the PS4 is online for the first installation.");
+        addStep("Reinstall only this firmware family's cache.");
+        addStep("If it fails again, clear browser website data and retry.");
+    } else if (code === "CACHE_OBSOLETE") {
+        setText("recovery-title", "The saved family cache became obsolete.");
+        setText("recovery-description", "The browser invalidated the current offline cache.");
+        addStep("Reinstall the family cache.");
+        addStep("Return to the host after installation completes.");
+    } else if (code === "MODULE_LOAD_FAILED") {
+        setText("recovery-title", "A required local module could not be loaded.");
+        setText("recovery-description", "The family cache may be incomplete or outdated.");
+        addStep("Reinstall the matching family cache.");
+        addStep("Reopen the host and try once more.");
+        addStep("If the same module fails again, open Diagnostics and note the firmware and error code.");
+    } else if (code === "APPCACHE_UNAVAILABLE") {
+        setText("recovery-title", "Offline cache support is unavailable.");
+        setText("recovery-description", "The browser did not expose the Application Cache API required by this host.");
+        addStep("Confirm this page is open in the PlayStation 4 browser.");
+        addStep("Close and reopen the browser.");
+        addStep("If the error remains, clear browser website data.");
+    } else if (code === "CONFIG_MISSING") {
+        setText("recovery-title", "Host configuration could not be loaded.");
+        setText("recovery-description", "A required shell file is missing or an old cache is still active.");
+        addStep("Return to the host while online.");
+        addStep("If this repeats, clear browser website data once.");
+    } else {
+        setText("recovery-title", "The host encountered an unexpected loading problem.");
+        setText("recovery-description", "Use Diagnostics to inspect firmware and cache state before retrying.");
+        addStep("Open Diagnostics.");
+        addStep("Return to the host and retry.");
+    }
+
+    if (family) {
+        repairLink.href = family.cachePage;
+        repairLink.textContent = "Reinstall " + family.label + " cache";
+
+        repairLink.onclick = function () {
+            try {
+                window.localStorage.removeItem(family.cacheKey);
+                window.localStorage.removeItem(family.cacheKey + "_attempts");
+            } catch (e) {}
+            return true;
+        };
+    } else {
+        repairLink.href = "index.html";
+        repairLink.textContent = "Return to host";
+    }
+
+    if (fw || family || detail) {
+        setText(
+            "recovery-detail",
+            (fw ? "Firmware: " + fw + ". " : "") +
+            (family ? "Family: " + family.label + ". " : "") +
+            (detail ? "Detail: " + detail : "")
+        );
+    }
+}());
+</script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tayson PS4 webkit - Cache Migration</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1 class="main-title">
+            <span class="highlight">Tayson</span>
+            <span class="ps4-text">PS4</span>
+            <span class="webkit-text">webkit</span>
+        </h1>
+        <div class="subtitle">Cache Migration</div>
+    </header>
+    <div class="status-bar">
+        <span id="msgs" class="status-text loading">Selecting firmware cache...</span>
+    </div>
+</div>
+
+<script src="host-config.js"></script>
+<script>
+(function () {
+    var config = window.TaysonHostConfig;
+    var msgs = document.getElementById("msgs");
+    var match = (navigator.userAgent || "").match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
+    var fw = match ? match[1] + "." + match[2] : "";
+    var route = config && config.resolveRoute ? config.resolveRoute(fw) : null;
+    var family = route && config.families ? config.families[route.family] : null;
+
+    if (!family) {
+        msgs.textContent = "No compatible family cache found.";
+        msgs.className = "status-text error";
+        return;
+    }
+
+    msgs.textContent = "Migrating to " + family.label + " family cache...";
+
+    window.setTimeout(function () {
+        window.location.replace(family.cachePage);
+    }, 450);
+}());
+</script>
+</body>
+</html>

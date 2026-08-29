@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tayson PS4 webkit - Diagnostics</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1 class="main-title">
+            <span class="highlight">Tayson</span>
+            <span class="ps4-text">PS4</span>
+            <span class="webkit-text">webkit</span>
+        </h1>
+        <div class="subtitle">Diagnostics</div>
+        <div class="version-badge">Safe preflight</div>
+    </header>
+
+    <hr class="separator">
+
+    <main id="menu">
+        <div class="diagnostic-list">
+            <div class="diagnostic-row"><span>Host release</span><strong id="diag-release">Checking...</strong></div>
+            <div class="diagnostic-row"><span>Runtime profile</span><strong id="diag-runtime">Checking...</strong></div>
+            <div class="diagnostic-row"><span>Device</span><strong id="diag-device">Checking...</strong></div>
+            <div class="diagnostic-row"><span>Firmware</span><strong id="diag-fw">Checking...</strong></div>
+            <div class="diagnostic-row"><span>Family</span><strong id="diag-family">Checking...</strong></div>
+            <div class="diagnostic-row"><span>Compatibility</span><strong id="diag-tier">Checking...</strong></div>
+            <div class="diagnostic-row"><span>Family cache</span><strong id="diag-cache">Checking...</strong></div>
+            <div class="diagnostic-row"><span>Repair attempts</span><strong id="diag-attempts">Checking...</strong></div>
+            <div class="diagnostic-row"><span>Last recovery</span><strong id="diag-error">Checking...</strong></div>
+            <div class="diagnostic-row"><span>Connection</span><strong id="diag-network">Checking...</strong></div>
+        </div>
+
+        <p id="diag-note" class="compatibility-note"></p>
+
+        <div class="action-group">
+            <a class="action-link" href="self-test.html">System Check</a>
+            <a class="action-link" href="index.html">Return to host</a>
+            <a id="diag-repair" class="action-link" href="recovery.html">Recovery</a>
+        </div>
+
+        <footer>
+            <p class="credit">Designed by <span class="credit-link">Tayson</span></p>
+        </footer>
+    </main>
+</div>
+
+<script src="host-config.js"></script>
+<script>
+(function () {
+    "use strict";
+
+    var config = window.TaysonHostConfig;
+    var LAST_ERROR_KEY = "tayson_last_recovery_code";
+    var ua = navigator.userAgent || "";
+    var match = ua.match(/PlayStation 4[ \/](\d+)\.(\d+)/i);
+    var fw = match ? match[1] + "." + match[2] : null;
+    var route = config && config.resolveRoute && fw ? config.resolveRoute(fw) : null;
+    var family = route && config.families ? config.families[route.family] : null;
+
+    function set(id, value) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = value;
+    }
+
+    function readLocal(key) {
+        try { return window.localStorage.getItem(key) || ""; }
+        catch (e) { return ""; }
+    }
+
+    set("diag-release", config ? config.release : "Unavailable");
+    set("diag-runtime", config && config.runtimeProfile === "low-memory" ? "Low-memory" : "Standard");
+    set("diag-device", fw ? "PlayStation 4" : "Not a PS4");
+    set("diag-fw", fw || "Unknown");
+    set("diag-family", family ? family.label : (route ? route.family : "None"));
+
+    if (route && route.verified) {
+        set("diag-tier", "Verified auto-run");
+        set("diag-note", "This firmware is enabled for automatic loading in this host.");
+    } else if (route && route.experimental) {
+        set("diag-tier", "Experimental manual");
+        set("diag-note", "This firmware can be tested manually but will never auto-run until hardware validation is confirmed.");
+    } else if (route) {
+        set("diag-tier", "Detected · not auto-run");
+        set("diag-note", "This firmware is recognized but automatic loading is disabled.");
+    } else if (fw) {
+        set("diag-tier", "Unsupported");
+        set("diag-note", "No route is configured for this firmware.");
+    } else {
+        set("diag-tier", "PS4 required");
+        set("diag-note", "Open this page using the PlayStation 4 browser for firmware diagnostics.");
+    }
+
+    if (family) {
+        var build = readLocal(family.cacheKey);
+        var attempts = readLocal(family.cacheKey + "_attempts");
+
+        set(
+            "diag-cache",
+            build === family.cacheBuild ?
+                ("Ready · " + build) :
+                (build ? ("Outdated · " + build) : "Not installed")
+        );
+        set("diag-attempts", attempts || "0");
+
+        document.getElementById("diag-repair").href =
+            "recovery.html?family=" + encodeURIComponent(route.family);
+    } else {
+        set("diag-cache", "Not applicable");
+        set("diag-attempts", "0");
+    }
+
+    set("diag-error", readLocal(LAST_ERROR_KEY) || "None");
+    set("diag-network", navigator.onLine === false ? "Offline" : "Online");
+}());
+</script>
+</body>
+</html>
