@@ -257,4 +257,1844 @@ select:focus, input[type="search"]:focus { border-color: color-mix(in srgb, var(
   .candidate-score { margin-top: 12px; text-align: left; }
   .candidate-score strong, .candidate-score span { display: inline; }
   .candidate-score span { margin-left: 8px; }
-  .
+  .candidate-footer { flex-direction: column; gap: 4px; }
+  .state-row { grid-template-columns: 44px 1fr; }
+  .state-progress-text { grid-column: 2; }
+  .elected-grid { grid-template-columns: 1fr; }
+  .footer { flex-direction: column; }
+}
+@media (max-width: 430px) {
+  .summary-grid { grid-template-columns: 1fr; }
+}
+
+/* v3 — mapa geográfico, painel nacional e rankings */
+.button-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.map-loading-text { fill: var(--muted); font: 700 14px system-ui, sans-serif; }
+.geo-state { cursor: pointer; outline: none; }
+.geo-state path, .map-municipality path { fill: var(--panel-2); stroke: color-mix(in srgb, var(--line) 88%, transparent); stroke-width: 1.1; vector-effect: non-scaling-stroke; transition: fill .16s, stroke .16s, opacity .16s; }
+.geo-state:hover path, .geo-state:focus path, .map-municipality:hover path, .map-municipality:focus path { stroke: var(--accent); stroke-width: 2.2; }
+.geo-state.selected path, .map-municipality.selected path { stroke: var(--accent); stroke-width: 3; }
+.geo-state[data-level="v0"] path, .map-municipality[data-level="v0"] path { fill: var(--panel-2); }
+.geo-state[data-level="v1"] path, .map-municipality[data-level="v1"] path { fill: color-mix(in srgb, var(--accent) 16%, var(--panel-2)); }
+.geo-state[data-level="v2"] path, .map-municipality[data-level="v2"] path { fill: color-mix(in srgb, var(--accent) 28%, var(--panel-2)); }
+.geo-state[data-level="v3"] path, .map-municipality[data-level="v3"] path { fill: color-mix(in srgb, var(--accent) 42%, var(--panel-2)); }
+.geo-state[data-level="v4"] path, .map-municipality[data-level="v4"] path { fill: color-mix(in srgb, var(--accent) 58%, var(--panel-2)); }
+.geo-state[data-level="v5"] path, .map-municipality[data-level="v5"] path { fill: color-mix(in srgb, var(--accent) 78%, var(--panel-2)); }
+.map-municipality { cursor: pointer; outline: none; }
+.map-municipality path { stroke-width: .55; }
+
+.national-card, .ranking-card { overflow: hidden; }
+.national-section { padding: 18px 24px 4px; }
+.national-section h3, .national-split h3, .ranking-pane h3 { margin: 0; font-size: 18px; }
+.national-president { display: grid; gap: 8px; margin-top: 12px; }
+.national-split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px 24px 24px; }
+.national-split > section { min-width: 0; }
+.territory-grid { display: grid; gap: 8px; margin-top: 12px; max-height: 720px; overflow: auto; padding-right: 2px; }
+.territory-card { display: grid; grid-template-columns: 72px minmax(0,1fr) auto; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel-solid); }
+.territory-card > div strong, .territory-card > div small, .territory-card p b, .territory-card p span { display: block; }
+.territory-card > div strong { font-size: 18px; }
+.territory-card > div small, .territory-card p span { color: var(--muted); font-size: 11px; margin-top: 2px; }
+.territory-card p { margin: 0; min-width: 0; }
+.territory-card p b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.territory-card em { font-style: normal; color: var(--accent); font-size: 10px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+.territory-card.muted { color: var(--muted); }
+
+.inline-field { min-width: 280px; }
+.ranking-grid { display: grid; grid-template-columns: 1fr 1fr; }
+.ranking-pane { min-width: 0; border-top: 1px solid var(--line); }
+.ranking-pane + .ranking-pane { border-left: 1px solid var(--line); }
+.subhead { display: flex; justify-content: space-between; gap: 14px; align-items: center; padding: 18px 20px 12px; }
+.subhead p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+.compact-status { padding: 10px 20px; font-size: 12px; }
+.ranking-list { display: grid; max-height: 760px; overflow: auto; }
+.ranking-row { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; align-items: center; gap: 12px; padding: 12px 18px; border-top: 1px solid var(--line); }
+.ranking-row > b { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 10px; background: var(--panel-2); font-size: 12px; }
+.ranking-row span strong, .ranking-row span small { display: block; }
+.ranking-row span strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ranking-row span small { color: var(--muted); margin-top: 2px; font-size: 11px; }
+.ranking-row em { font-style: normal; font-weight: 900; font-size: 16px; }
+.ranking-row.muted { color: var(--muted); }
+
+@media (max-width: 980px) {
+  .national-split, .ranking-grid { grid-template-columns: 1fr; }
+  .ranking-pane + .ranking-pane { border-left: 0; border-top: 1px solid var(--line); }
+}
+@media (max-width: 680px) {
+  .button-row { width: 100%; }
+  .button-row > button { flex: 1 1 auto; }
+  .inline-field { min-width: 0; width: 100%; }
+  .subhead { align-items: stretch; flex-direction: column; }
+  .territory-card { grid-template-columns: 56px minmax(0,1fr); }
+  .territory-card em { grid-column: 2; }
+  .ranking-row { grid-template-columns: 32px minmax(0,1fr) auto; padding-inline: 12px; }
+}
+
+</style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Ir para o conteúdo</a>
+
+  <header class="topbar">
+    <div class="brand-wrap">
+      <div class="brand-mark" aria-hidden="true">26</div>
+      <div>
+        <strong>Eleições Brasil</strong>
+        <span>Apuração 2026 · dados oficiais do TSE</span>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span id="connectionBadge" class="status-badge neutral">Conectando…</span>
+      <button id="themeToggle" class="icon-button" type="button" title="Alternar tema" aria-label="Alternar tema">◐</button>
+      <a class="tse-link" href="https://resultados.tse.jus.br/" target="_blank" rel="noopener noreferrer">TSE ↗</a>
+    </div>
+  </header>
+
+  <main id="main" class="shell">
+    <section class="hero">
+      <div>
+        <div class="eyebrow"><span class="live-dot" aria-hidden="true"></span><span id="liveLabel">Acompanhamento em tempo real</span></div>
+        <h1>Apuração eleitoral, sem ruído.</h1>
+        <p>Resultados, evolução da totalização, mapa por UF e consultas municipais em uma interface única. O painel não faz projeções: exibe os dados publicados pela Justiça Eleitoral.</p>
+      </div>
+      <div class="hero-status">
+        <span id="dataSourceBadge" class="status-badge neutral">Fonte direta</span>
+        <strong id="scopeLabel">Brasil · Presidente</strong>
+        <small>Última atualização: <span id="updatedAt">—</span></small>
+      </div>
+    </section>
+
+    <section class="card controls" aria-label="Filtros da consulta">
+      <div class="field">
+        <label for="turno">Turno</label>
+        <select id="turno">
+          <option value="1">1º turno</option>
+          <option value="2">2º turno</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="cargo">Cargo</label>
+        <select id="cargo">
+          <option value="1">Presidente</option>
+          <option value="3">Governador</option>
+          <option value="5">Senador</option>
+          <option value="6">Deputado Federal</option>
+          <option value="7">Deputado Estadual</option>
+          <option value="8">Deputado Distrital</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="abrangencia">Abrangência</label>
+        <select id="abrangencia">
+          <option value="br">Brasil</option>
+          <option value="uf">Estado</option>
+          <option value="municipio">Município</option>
+        </select>
+      </div>
+      <div class="field" id="ufField">
+        <label for="uf">UF</label>
+        <select id="uf"></select>
+      </div>
+      <div class="field hidden" id="municipioField">
+        <label for="municipio">Município</label>
+        <select id="municipio" disabled><option value="">Carregando municípios…</option></select>
+      </div>
+      <button id="refreshButton" class="primary-button" type="button">Atualizar agora</button>
+    </section>
+
+    <div id="notice" class="notice hidden" role="status"></div>
+
+    <nav class="tabs" aria-label="Seções do painel">
+      <button class="tab-button active" type="button" data-tab="apurar" aria-selected="true">Apuração</button>
+      <button class="tab-button" type="button" data-tab="mapa" aria-selected="false">Mapa</button>
+      <button class="tab-button" type="button" data-tab="nacional" aria-selected="false">Painel nacional</button>
+      <button class="tab-button" type="button" data-tab="rankings" aria-selected="false">Rankings</button>
+      <button class="tab-button" type="button" data-tab="evolucao" aria-selected="false">Evolução</button>
+      <button class="tab-button" type="button" data-tab="eleitos" aria-selected="false">Eleitos</button>
+    </nav>
+
+    <section id="tab-apurar" class="tab-panel active">
+      <div class="summary-grid">
+        <article class="metric-card">
+          <span>Seções totalizadas</span>
+          <strong id="pctSecoes">—</strong>
+          <div class="progress" aria-hidden="true"><div id="pctSecoesBar" class="progress-bar"></div></div>
+          <small id="secoesDetail">—</small>
+        </article>
+        <article class="metric-card">
+          <span>Eleitorado</span>
+          <strong id="eleitorado">—</strong>
+          <small id="comparecimento">Comparecimento: —</small>
+        </article>
+        <article class="metric-card">
+          <span>Votos válidos</span>
+          <strong id="votosValidos">—</strong>
+          <small id="votosTotais">Total computado: —</small>
+        </article>
+        <article class="metric-card">
+          <span>Brancos + nulos</span>
+          <strong id="brancosNulos">—</strong>
+          <small id="brancosNulosPct">—</small>
+        </article>
+      </div>
+
+      <section class="card results">
+        <header class="section-head">
+          <div>
+            <p class="section-kicker">Resultado publicado</p>
+            <h2 id="resultTitle">Candidatos</h2>
+            <p id="resultSubtitle">Ordenados pelos votos válidos informados pelo TSE.</p>
+          </div>
+          <label class="search-box">
+            <span class="sr-only">Pesquisar candidato</span>
+            <input id="searchInput" type="search" placeholder="Nome, número ou partido">
+          </label>
+        </header>
+
+        <div id="loadingState" class="loading-state">
+          <span class="spinner" aria-hidden="true"></span>
+          <span>Consultando dados oficiais…</span>
+        </div>
+        <div id="emptyState" class="empty-state hidden">
+          <strong>Nenhum dado disponível.</strong>
+          <p>A consulta pode ainda não ter sido publicada pelo TSE ou não possuir candidatos para esta abrangência.</p>
+        </div>
+        <div id="candidateList" class="candidate-list"></div>
+      </section>
+    </section>
+
+    <section id="tab-mapa" class="tab-panel">
+      <div class="two-column-layout">
+        <section class="card map-card">
+          <header class="section-head compact">
+            <div>
+              <p class="section-kicker">Território brasileiro</p>
+              <h2>Mapa geográfico interativo</h2>
+              <p>Limites estaduais reais; a visão municipal é carregada sob demanda para a UF selecionada.</p>
+            </div>
+            <div class="button-row">
+              <button id="showStatesMapButton" class="secondary-button" type="button">Estados</button>
+              <button id="showMunicipalMapButton" class="secondary-button" type="button">Municípios da UF</button>
+              <button id="compareStatesButton" class="secondary-button" type="button">Atualizar 27 UFs</button>
+            </div>
+          </header>
+          <div class="map-legend">
+            <span id="mapModeStatus">Mapa: carregando geometria…</span>
+            <span><i class="legend-box low"></i> menor valor</span>
+            <span><i class="legend-box high"></i> maior valor</span>
+          </div>
+          <div class="map-wrap">
+            <svg id="brazilMap" class="brazil-map" viewBox="0 0 760 700" role="img" aria-label="Mapa geográfico interativo do Brasil"></svg>
+          </div>
+        </section>
+
+        <aside class="card state-inspector">
+          <p class="section-kicker">UF selecionada</p>
+          <h2 id="mapStateName">Selecione um estado</h2>
+          <div id="mapStateMeta" class="inspector-meta">O painel exibirá o andamento da totalização e os candidatos mais votados na UF.</div>
+          <div id="mapStateCandidates" class="mini-ranking"></div>
+          <button id="openStateButton" class="primary-button full hidden" type="button">Abrir esta UF</button>
+        </aside>
+      </div>
+
+      <section class="card compare-card">
+        <header class="section-head compact">
+          <div>
+            <p class="section-kicker">Comparação estadual</p>
+            <h2>Panorama das 27 UFs</h2>
+            <p>Para Presidente, compara os mesmos candidatos entre as UFs. Para cargos estaduais, mostra o mais votado de cada estado.</p>
+          </div>
+          <label class="search-box">
+            <span class="sr-only">Filtrar UFs</span>
+            <input id="stateSearchInput" type="search" placeholder="Filtrar por UF ou candidato">
+          </label>
+        </header>
+        <div id="stateCompareStatus" class="inline-status">Clique em “Atualizar 27 UFs” para carregar a comparação.</div>
+        <div id="stateComparison" class="state-comparison"></div>
+      </section>
+    </section>
+
+    <section id="tab-nacional" class="tab-panel">
+      <section class="card national-card">
+        <header class="section-head compact">
+          <div>
+            <p class="section-kicker">Visão Brasil</p>
+            <h2>Presidência, Governadores e Senado</h2>
+            <p>Resumo nacional dos arquivos publicados. Para Governador e Senado, cada UF é exibida separadamente; o painel não transforma liderança parcial em projeção.</p>
+          </div>
+          <button id="loadNationalButton" class="primary-button" type="button">Carregar painel nacional</button>
+        </header>
+        <div id="nationalStatus" class="inline-status">Clique em “Carregar painel nacional” para consultar os dados.</div>
+        <div class="national-section">
+          <h3>Presidente · Brasil</h3>
+          <div id="nationalPresident" class="national-president"></div>
+        </div>
+        <div class="national-split">
+          <section>
+            <h3>Governador · 27 UFs</h3>
+            <div id="nationalGovernors" class="territory-grid"></div>
+          </section>
+          <section>
+            <h3>Senado · 27 UFs</h3>
+            <div id="nationalSenate" class="territory-grid"></div>
+          </section>
+        </div>
+      </section>
+    </section>
+
+    <section id="tab-rankings" class="tab-panel">
+      <section class="card ranking-card">
+        <header class="section-head compact">
+          <div>
+            <p class="section-kicker">Comparação territorial</p>
+            <h2>Ranking por UF e município</h2>
+            <p>Escolha um candidato da consulta atual. O ranking municipal é carregado em lotes pequenos para reduzir pressão sobre a infraestrutura do TSE.</p>
+          </div>
+          <label class="field inline-field">
+            <span>Candidato</span>
+            <select id="rankingCandidate"></select>
+          </label>
+        </header>
+        <div class="ranking-grid">
+          <section class="ranking-pane">
+            <div class="subhead">
+              <div><h3>Unidades da Federação</h3><p>Percentual do candidato em cada UF.</p></div>
+              <button id="loadStateRankingButton" class="secondary-button" type="button">Carregar UFs</button>
+            </div>
+            <div id="stateRankingStatus" class="inline-status compact-status">Aguardando consulta.</div>
+            <div id="stateRanking" class="ranking-list"></div>
+          </section>
+          <section class="ranking-pane">
+            <div class="subhead">
+              <div><h3>Municípios da UF</h3><p>Ranking progressivo da UF atualmente selecionada.</p></div>
+              <div class="button-row">
+                <button id="loadMunicipalBatchButton" class="secondary-button" type="button">Carregar +30</button>
+                <button id="loadAllMunicipalButton" class="secondary-button" type="button">Carregar todos</button>
+                <button id="stopMunicipalButton" class="secondary-button hidden" type="button">Parar</button>
+              </div>
+            </div>
+            <div id="municipalRankingStatus" class="inline-status compact-status">Selecione uma UF e um candidato.</div>
+            <div id="municipalRanking" class="ranking-list"></div>
+          </section>
+        </div>
+      </section>
+    </section>
+
+    <section id="tab-evolucao" class="tab-panel">
+      <section class="card chart-card">
+        <header class="section-head compact">
+          <div>
+            <p class="section-kicker">Histórico da sessão</p>
+            <h2>Evolução da totalização</h2>
+            <p>Os pontos são salvos no navegador sempre que o TSE publica uma atualização. Com KV no Worker, o histórico pode ser compartilhado entre visitantes.</p>
+          </div>
+          <button id="clearHistoryButton" class="secondary-button" type="button">Limpar histórico local</button>
+        </header>
+        <div class="chart-shell">
+          <canvas id="sectionsChart" height="320" aria-label="Gráfico de evolução das seções totalizadas"></canvas>
+          <div id="sectionsChartEmpty" class="chart-empty hidden">Ainda não há pontos suficientes para desenhar a evolução.</div>
+        </div>
+      </section>
+
+      <section class="card chart-card">
+        <header class="section-head compact">
+          <div>
+            <p class="section-kicker">Votos válidos</p>
+            <h2>Evolução dos candidatos</h2>
+            <p>Mostra os candidatos mais votados da consulta atual ao longo das atualizações armazenadas.</p>
+          </div>
+        </header>
+        <div id="candidateChartLegend" class="chart-legend"></div>
+        <div class="chart-shell">
+          <canvas id="candidatesChart" height="360" aria-label="Gráfico de evolução percentual dos candidatos"></canvas>
+          <div id="candidatesChartEmpty" class="chart-empty hidden">Ainda não há pontos suficientes para desenhar a evolução.</div>
+        </div>
+      </section>
+    </section>
+
+    <section id="tab-eleitos" class="tab-panel">
+      <section class="card elected-card">
+        <header class="section-head compact">
+          <div>
+            <p class="section-kicker">Situação oficial</p>
+            <h2>Candidatos marcados como eleitos</h2>
+            <p>Para Governador, Senador e Deputado Federal, o painel também tenta consultar o arquivo nacional EA10 de eleitos; nas demais consultas usa a marcação oficial do resultado unificado.</p>
+          </div>
+          <div class="button-row">
+            <button id="loadElectedButton" class="secondary-button" type="button">Carregar cargos da UF</button>
+            <button id="loadNationalElectedButton" class="secondary-button" type="button">Arquivo nacional de eleitos</button>
+          </div>
+        </header>
+        <div id="electedNotice" class="inline-status">A consulta atual será usada como referência. Para cargos estaduais, você pode carregar todos os cargos da UF selecionada.</div>
+        <div id="electedGrid" class="elected-grid"></div>
+      </section>
+    </section>
+
+    <section class="info-grid">
+      <article class="card info-card">
+        <p class="section-kicker">Fonte</p>
+        <h2>Justiça Eleitoral</h2>
+        <p>O site consulta os arquivos JSON públicos do TSE. A camada Cloudflare é opcional e não altera votos: apenas valida parâmetros, aplica cache curto e reduz repetição de chamadas.</p>
+      </article>
+      <article class="card info-card">
+        <p class="section-kicker">Atualização</p>
+        <h2>Polling controlado</h2>
+        <p>A consulta principal atualiza automaticamente a cada 30 segundos. O comparativo de 27 UFs só é carregado sob demanda.</p>
+      </article>
+      <article class="card info-card">
+        <p class="section-kicker">Neutralidade</p>
+        <h2>Sem projeção</h2>
+        <p>O painel não produz previsão de resultado, chance de vitória, ranking editorial ou recomendação política. Apenas organiza dados reportados.</p>
+      </article>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div>
+      <strong>Eleições Brasil 2026</strong>
+      <span>Projeto independente. Não é um produto oficial do TSE.</span>
+    </div>
+    <div>
+      <a href="https://www.tse.jus.br/eleicoes/informacoes-tecnicas-sobre-a-divulgacao-de-resultados" target="_blank" rel="noopener noreferrer">Documentação técnica</a>
+      <a href="https://dadosabertos.tse.jus.br/" target="_blank" rel="noopener noreferrer">Dados abertos</a>
+    </div>
+  </footer>
+
+  <template id="candidateTemplate">
+    <article class="candidate-card">
+      <div class="candidate-photo-wrap">
+        <img class="candidate-photo" alt="" loading="lazy">
+        <div class="candidate-placeholder" aria-hidden="true">—</div>
+      </div>
+      <div class="candidate-main">
+        <div class="candidate-heading">
+          <div>
+            <div class="candidate-meta"><span class="candidate-number"></span><span class="candidate-party"></span></div>
+            <h3 class="candidate-name"></h3>
+            <p class="candidate-vice"></p>
+          </div>
+          <div class="candidate-score"><strong></strong><span></span></div>
+        </div>
+        <div class="progress candidate-progress"><div class="progress-bar"></div></div>
+        <div class="candidate-footer"><span class="candidate-status"></span><span class="candidate-coalition"></span></div>
+      </div>
+    </article>
+  </template>
+
+  <script>
+
+/* === config.js === */
+window.ELEICOES_APP_CONFIG = Object.freeze({
+  // Ex.: 'https://eleicoes-api.seu-subdominio.workers.dev'
+  // Deixe vazio para consultar o TSE diretamente do navegador.
+  workerBase: '',
+  pollMs: 30000,
+});
+
+
+/* === tse.js === */
+const TSE_BASE = 'https://resultados.tse.jus.br/oficial';
+const CYCLE = 'ele2026';
+const ELECTION_CONFIG_URL = `${TSE_BASE}/comum/config/ele-c.json`;
+const ELECTIONS = Object.freeze({
+  federal: { 1: '6257', 2: '6258' },
+  estadual: { 1: '6259', 2: '6260' },
+});
+const OFFICES = Object.freeze({
+  1: { name: 'Presidente', election: 'federal', secondRound: true },
+  3: { name: 'Governador', election: 'estadual', secondRound: true },
+  5: { name: 'Senador', election: 'estadual' },
+  6: { name: 'Deputado Federal', election: 'estadual' },
+  7: { name: 'Deputado Estadual', election: 'estadual' },
+  8: { name: 'Deputado Distrital', election: 'estadual', only: 'DF' },
+});
+const STATES = Object.freeze([
+  ['AC','Acre'],['AL','Alagoas'],['AP','Amapá'],['AM','Amazonas'],['BA','Bahia'],['CE','Ceará'],['DF','Distrito Federal'],['ES','Espírito Santo'],['GO','Goiás'],['MA','Maranhão'],['MT','Mato Grosso'],['MS','Mato Grosso do Sul'],['MG','Minas Gerais'],['PA','Pará'],['PB','Paraíba'],['PR','Paraná'],['PE','Pernambuco'],['PI','Piauí'],['RJ','Rio de Janeiro'],['RN','Rio Grande do Norte'],['RS','Rio Grande do Sul'],['RO','Rondônia'],['RR','Roraima'],['SC','Santa Catarina'],['SP','São Paulo'],['SE','Sergipe'],['TO','Tocantins'],
+]);
+
+const APP_CONFIG = window.ELEICOES_APP_CONFIG || {};
+const workerBase = String(APP_CONFIG.workerBase || '').replace(/\/$/, '');
+
+const nf = new Intl.NumberFormat('pt-BR');
+const pf = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+function num(value) {
+  const n = Number(value ?? 0);
+  return Number.isFinite(n) ? n : 0;
+}
+function pct(value) { return num(String(value ?? '0').replace(',', '.')); }
+function fmtInt(value) { return nf.format(num(value)); }
+function fmtPct(value) { return `${pf.format(pct(value))}%`; }
+function officeName(id) { return OFFICES[id]?.name || `Cargo ${id}`; }
+function stateName(code) { return STATES.find(([uf]) => uf === code)?.[1] || code; }
+function queryKey({ turn, office, scope, uf, municipality }) {
+  return [turn, office, scope, uf || 'BR', municipality || ''].join(':');
+}
+
+function electionCode(office, turn) {
+  const cfg = OFFICES[office];
+  if (!cfg) throw new Error('Cargo inválido.');
+  if (Number(turn) === 2 && !cfg.secondRound) throw new Error(`${cfg.name} não possui 2º turno.`);
+  return ELECTIONS[cfg.election]?.[turn];
+}
+
+function buildScope({ office, scope, uf, municipality }) {
+  if (scope === 'br') {
+    if (Number(office) !== 1) throw new Error('A abrangência Brasil é válida apenas para Presidente.');
+    return 'br';
+  }
+  const state = String(uf || '').toLowerCase();
+  if (!/^[a-z]{2}$/.test(state)) throw new Error('UF inválida.');
+  if (scope === 'municipio') {
+    const mun = String(municipality || '').padStart(5, '0');
+    if (!/^\d{5}$/.test(mun)) throw new Error('Município inválido.');
+    return `${state}${mun}`;
+  }
+  return state;
+}
+
+function buildResultUrl(params) {
+  const office = Number(params.office);
+  const turn = Number(params.turn);
+  const election = electionCode(office, turn);
+  if (!election) throw new Error('Turno ainda não configurado para este cargo.');
+  const scopeCode = buildScope(params);
+  const folder = params.scope === 'br' ? 'br' : String(params.uf).toLowerCase();
+  const cargo = String(office).padStart(4, '0');
+  const ele = String(election).padStart(6, '0');
+  return `${TSE_BASE}/${CYCLE}/${election}/dados/${folder}/${scopeCode}-c${cargo}-e${ele}-u.json`;
+}
+
+function buildMunicipalityConfigUrl({ office, turn }) {
+  const election = electionCode(Number(office), Number(turn));
+  const ele = String(election).padStart(6, '0');
+  return `${TSE_BASE}/${CYCLE}/${election}/config/mun-e${ele}-cm.json`;
+}
+
+function buildPhotoUrl({ office, turn, uf, sqcand }) {
+  const election = electionCode(Number(office), Number(turn));
+  const folder = Number(office) === 1 ? 'br' : String(uf || '').toLowerCase();
+  return `${TSE_BASE}/${CYCLE}/${election}/fotos/${folder}/${sqcand}.jpeg`;
+}
+
+function workerUrl(path, params) {
+  if (!workerBase) return '';
+  const url = new URL(`${workerBase}${path}`);
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, String(v));
+  });
+  return url.toString();
+}
+
+async function fetchJson(url, { signal } = {}) {
+  const response = await fetch(url, { cache: 'no-store', signal, headers: { Accept: 'application/json' } });
+  if (response.status === 404 || response.status === 403) {
+    const error = new Error('Resultado ainda não disponível para esta consulta.');
+    error.code = 'NOT_AVAILABLE';
+    throw error;
+  }
+  if (!response.ok) throw new Error(`Fonte respondeu com status ${response.status}.`);
+  return response.json();
+}
+
+function candidateOutcome(cand, office, turn) {
+  const attributed = cand.e === 's';
+  const status = String(cand.st || '');
+  const majoritarianRunoff = [1, 3].includes(Number(office)) && Number(turn) === 1;
+  const runoff = attributed && majoritarianRunoff && /(2\s*[ºo°]?\s*turno|segundo\s+turno)/i.test(status);
+  const elected = attributed && !runoff && (
+    [5, 6, 7, 8].includes(Number(office)) || Number(turn) === 2 || /eleit/i.test(status)
+  );
+  return { attributed, elected, runoff };
+}
+
+function normalizeResult(raw, params) {
+  const office = Number(params.office);
+  const cargo = (raw.carg || []).find(x => Number(x.cd) === office) || (raw.carg || [])[0] || { agr: [], nmn: officeName(office), nv: '0' };
+  const candidates = [];
+  for (const group of cargo.agr || []) {
+    const coalition = group.tp === 'c' ? (group.nm || '') : '';
+    for (const party of group.par || []) {
+      for (const cand of party.cand || []) {
+        const outcome = candidateOutcome(cand, office, Number(params.turn));
+        candidates.push({
+          sqcand: cand.sqcand || '',
+          number: cand.n || '',
+          name: cand.nmu || cand.nm || 'Nome não informado',
+          fullName: cand.nm || '',
+          party: party.sg || '',
+          coalition,
+          votes: num(cand.vap),
+          percent: pct(cand.pvap),
+          attributed: outcome.attributed,
+          elected: outcome.elected,
+          runoff: outcome.runoff,
+          status: cand.st || '',
+          vices: (cand.vs || []).map(v => ({ name: v.nmu || v.nm || '', party: v.sgp || '', type: v.tp || '' })),
+          photo: cand.sqcand ? buildPhotoUrl({ ...params, sqcand: cand.sqcand }) : '',
+        });
+      }
+    }
+  }
+  candidates.sort((a, b) => b.votes - a.votes || a.name.localeCompare(b.name, 'pt-BR'));
+
+  return {
+    office,
+    officeName: cargo.nmn || officeName(office),
+    scopeCode: raw.cdabr || buildScope(params),
+    seats: num(cargo.nv),
+    generatedAt: [raw.dg, raw.hg].filter(Boolean).join(' '),
+    final: raw.tf === 's',
+    sections: { total: num(raw.s?.ts), counted: num(raw.s?.st), percent: pct(raw.s?.pst) },
+    electorate: {
+      total: num(raw.e?.te), turnout: num(raw.e?.c), turnoutPct: pct(raw.e?.pc),
+      abstention: num(raw.e?.a), abstentionPct: pct(raw.e?.pa),
+    },
+    votes: {
+      total: num(raw.v?.tv), valid: num(raw.v?.vv), blank: num(raw.v?.vb), blankPct: pct(raw.v?.pvb),
+      null: num(raw.v?.tvn), nullPct: pct(raw.v?.ptvn),
+    },
+    candidates,
+    rawId: raw.idg || '',
+  };
+}
+
+async function fetchResult(params, options = {}) {
+  const viaWorker = workerUrl('/api/result', {
+    turn: params.turn, office: params.office, scope: params.scope, uf: params.uf, municipality: params.municipality,
+  });
+  const raw = await fetchJson(viaWorker || buildResultUrl(params), options);
+  return normalizeResult(raw, params);
+}
+
+async function fetchMunicipalities({ office, turn, uf }, options = {}) {
+  const viaWorker = workerUrl('/api/municipalities', { office, turn, uf });
+  if (viaWorker) {
+    const data = await fetchJson(viaWorker, options);
+    return Array.isArray(data.municipalities) ? data.municipalities : [];
+  }
+  const raw = await fetchJson(buildMunicipalityConfigUrl({ office, turn }), options);
+  const group = (raw.abr || []).find(x => String(x.cd).toUpperCase() === String(uf).toUpperCase());
+  return (group?.mu || []).map(m => ({ code: String(m.cd).padStart(5, '0'), ibge: m.cdi || '', name: m.nm || m.cd, capital: m.c === 's' }));
+}
+
+async function fetchElectionConfig(options = {}) {
+  return fetchJson(ELECTION_CONFIG_URL, options);
+}
+
+function hasElectionCode(node, code) {
+  if (!node || typeof node !== 'object') return false;
+  if (!Array.isArray(node) && String(node.cd || '') === String(code)) return true;
+  return Object.values(node).some(value => value && typeof value === 'object' && hasElectionCode(value, code));
+}
+
+async function ensureBatchElectionPublished(office, turn, options = {}) {
+  if (Number(turn) !== 2) return true;
+  const election = electionCode(Number(office), Number(turn));
+  const config = await fetchElectionConfig(options);
+  if (!hasElectionCode(config, election)) {
+    const error = new Error('2º turno ainda não publicado no arquivo oficial de configuração do TSE.');
+    error.code = 'ELECTION_NOT_PUBLISHED';
+    throw error;
+  }
+  return true;
+}
+
+async function fetchStateComparison({ office, turn }, { signal, onProgress } = {}) {
+  await ensureBatchElectionPublished(office, turn, { signal });
+  const viaWorker = workerUrl('/api/compare', { office, turn });
+  if (viaWorker) {
+    const data = await fetchJson(viaWorker, { signal });
+    return data.states || [];
+  }
+
+  const states = STATES.map(([uf]) => uf);
+  const results = [];
+  const concurrency = 5;
+  let cursor = 0;
+  let done = 0;
+  async function runner() {
+    while (cursor < states.length) {
+      const index = cursor++;
+      const uf = states[index];
+      try {
+        if (Number(office) === 8 && uf !== 'DF') {
+          results[index] = { uf, error: 'NOT_APPLICABLE' };
+          continue;
+        }
+        const result = await fetchResult({ turn, office, scope: 'uf', uf }, { signal });
+        results[index] = summarizeState(uf, result);
+      } catch (error) {
+        results[index] = { uf, error: error.code || 'FETCH_ERROR' };
+      } finally {
+        done += 1;
+        onProgress?.(done, states.length);
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: concurrency }, runner));
+  return results.filter(Boolean);
+}
+
+function summarizeState(uf, result) {
+  const top = result.candidates.slice(0, 3).map(c => ({
+    name: c.name, party: c.party, number: c.number, votes: c.votes, percent: c.percent, attributed:c.attributed, elected: c.elected, runoff:c.runoff, status:c.status,
+  }));
+  return {
+    uf,
+    state: stateName(uf),
+    generatedAt: result.generatedAt,
+    final: result.final,
+    sectionsPct: result.sections.percent,
+    validVotes: result.votes.valid,
+    top,
+    candidates: result.candidates.map(c => ({ name:c.name, party:c.party, number:c.number, votes:c.votes, percent:c.percent, attributed:c.attributed, elected:c.elected, runoff:c.runoff, status:c.status })),
+  };
+}
+
+async function fetchRemoteHistory(key, options = {}) {
+  const url = workerUrl('/api/history', { key });
+  if (!url) return [];
+  try {
+    const data = await fetchJson(url, options);
+    return Array.isArray(data.snapshots) ? data.snapshots : [];
+  } catch {
+    return [];
+  }
+}
+
+function buildElectedUrl({ office, turn = 1 }) {
+  const id = Number(office);
+  if (![3,5,6].includes(id)) throw new Error('Arquivo nacional de eleitos disponível apenas para Governador, Senador e Deputado Federal.');
+  const election = electionCode(id, Number(turn));
+  const cargo = String(id).padStart(4, '0');
+  const ele = String(election).padStart(6, '0');
+  return `${TSE_BASE}/${CYCLE}/${election}/dados/br/br-c${cargo}-e${ele}-e.json`;
+}
+
+function normalizeElected(raw, office) {
+  const seen = new Set();
+  const rows = [];
+  const scopes = Array.isArray(raw?.abr) ? raw.abr : [];
+  for (const scope of scopes) {
+    const uf = String(scope.cdabr || '').toUpperCase();
+    for (const c of scope.cand || []) {
+      const row = {
+        sqcand: String(c.sqcand || ''),
+        number: String(c.n || ''),
+        name: c.nmu || c.nm || 'Nome não informado',
+        fullName: c.nm || '',
+        party: c.sgp || '',
+        uf,
+        scopeName: scope.nmabr || '',
+        votes: num(c.vap),
+        percent: pct(c.pvap),
+        status: c.st || 'ELEITO',
+        vices: (c.vs || []).map(v => ({ name:v.nmu || v.nm || '', party:v.sgp || '', type:v.tp || '' })),
+        office: Number(office),
+      };
+      const key = row.sqcand || `${row.uf}:${row.number}:${row.name}`;
+      if (!seen.has(key)) { seen.add(key); rows.push(row); }
+    }
+  }
+  return rows;
+}
+
+async function fetchElected({ office, turn = 1 }, options = {}) {
+  const viaWorker = workerUrl('/api/elected', { office, turn });
+  const raw = await fetchJson(viaWorker || buildElectedUrl({ office, turn }), options);
+  if (Array.isArray(raw.elected)) return raw.elected;
+  return normalizeElected(raw, office);
+}
+
+async function fetchMunicipalityRanking(
+  { office, turn, uf, candidateSq, start = 0, count = 30, municipalities },
+  { signal, onProgress } = {},
+) {
+  const list = municipalities || await fetchMunicipalities({ office, turn, uf }, { signal });
+  const slice = list.slice(start, start + count);
+  const rows = new Array(slice.length);
+  let cursor = 0, done = 0;
+  const concurrency = 5;
+  async function runner() {
+    while (cursor < slice.length) {
+      if (signal?.aborted) throw new DOMException('Abortado', 'AbortError');
+      const index = cursor++;
+      const municipality = slice[index];
+      try {
+        const result = await fetchResult({ turn, office, scope:'municipio', uf, municipality:municipality.code }, { signal });
+        const candidate = result.candidates.find(c => c.sqcand === candidateSq);
+        rows[index] = {
+          code:municipality.code, ibge:municipality.ibge || '', name:municipality.name, capital:Boolean(municipality.capital),
+          votes:candidate?.votes || 0, percent:candidate?.percent || 0, sectionsPct:result.sections.percent,
+          validVotes:result.votes.valid, generatedAt:result.generatedAt, available:true,
+        };
+      } catch (error) {
+        if (error.name === 'AbortError') throw error;
+        rows[index] = { code:municipality.code, ibge:municipality.ibge || '', name:municipality.name, capital:Boolean(municipality.capital), available:false, error:error.code || 'FETCH_ERROR', votes:0, percent:0, sectionsPct:0 };
+      } finally { done += 1; onProgress?.(done, slice.length); }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, Math.max(1, slice.length)) }, runner));
+  return { rows:rows.filter(Boolean), next:start + slice.length, total:list.length, municipalities:list };
+}
+
+function isWorkerEnabled() { return Boolean(workerBase); }
+
+
+/* === history.js === */
+const PREFIX = 'eleicoes2026.history.';
+const MAX_SNAPSHOTS = 240;
+
+function storageKey(key) { return `${PREFIX}${key}`; }
+
+function snapshotFromResult(result) {
+  return {
+    at: Date.now(),
+    generatedAt: result.generatedAt,
+    rawId: result.rawId || '',
+    sectionsPct: result.sections.percent,
+    validVotes: result.votes.valid,
+    candidates: result.candidates.slice(0, 8).map(c => ({ id: `${c.number}:${c.party}`, name: c.name, party: c.party, percent: c.percent, votes: c.votes })),
+  };
+}
+
+function readHistory(key) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(storageKey(key)) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function appendHistory(key, result) {
+  const list = readHistory(key);
+  const next = snapshotFromResult(result);
+  const last = list.at(-1);
+  const same = last && (
+    (next.rawId && last.rawId === next.rawId) ||
+    (!next.rawId && last.generatedAt === next.generatedAt && last.sectionsPct === next.sectionsPct)
+  );
+  if (same) return list;
+  list.push(next);
+  const trimmed = list.slice(-MAX_SNAPSHOTS);
+  localStorage.setItem(storageKey(key), JSON.stringify(trimmed));
+  return trimmed;
+}
+
+function mergeHistories(local, remote) {
+  const map = new Map();
+  [...remote, ...local].forEach(item => {
+    const id = item.rawId || `${item.generatedAt}:${item.sectionsPct}:${item.validVotes}`;
+    map.set(id, item);
+  });
+  return [...map.values()].sort((a, b) => (a.at || 0) - (b.at || 0)).slice(-MAX_SNAPSHOTS);
+}
+
+function clearHistory(key) { localStorage.removeItem(storageKey(key)); }
+
+
+/* === charts.js === */
+const PALETTE = ['#52d3a2', '#66a8ff', '#f8c05d', '#c996ff', '#ff8f91', '#9dd86c'];
+
+function prepareCanvas(canvas) {
+  const rect = canvas.getBoundingClientRect();
+  const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  const width = Math.max(320, Math.floor(rect.width));
+  const height = Number(canvas.getAttribute('height')) || 320;
+  canvas.width = Math.floor(width * dpr);
+  canvas.height = Math.floor(height * dpr);
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, width, height };
+}
+
+function css(name, fallback) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+}
+
+function drawAxes(ctx, width, height, { min = 0, max = 100, ticks = 5 } = {}) {
+  const left = 52, right = 18, top = 18, bottom = 34;
+  const plotW = width - left - right;
+  const plotH = height - top - bottom;
+  ctx.clearRect(0, 0, width, height);
+  ctx.font = '12px system-ui, sans-serif';
+  ctx.fillStyle = css('--muted', '#8fa29c');
+  ctx.strokeStyle = css('--line', '#253630');
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= ticks; i++) {
+    const value = min + (max - min) * (i / ticks);
+    const y = top + plotH - (plotH * i / ticks);
+    ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(width - right, y); ctx.stroke();
+    ctx.fillText(`${value.toFixed(max <= 10 ? 1 : 0)}%`, 4, y + 4);
+  }
+  return { left, right, top, bottom, plotW, plotH, min, max };
+}
+
+function xAt(index, count, axes) {
+  if (count <= 1) return axes.left + axes.plotW / 2;
+  return axes.left + (index / (count - 1)) * axes.plotW;
+}
+function yAt(value, axes) {
+  const t = (value - axes.min) / Math.max(0.0001, axes.max - axes.min);
+  return axes.top + axes.plotH - t * axes.plotH;
+}
+
+function drawTimeLabels(ctx, points, axes, width) {
+  const indices = points.length <= 4 ? points.map((_, i) => i) : [0, Math.floor((points.length - 1) / 2), points.length - 1];
+  ctx.fillStyle = css('--muted', '#8fa29c');
+  ctx.font = '11px system-ui, sans-serif';
+  indices.forEach((idx, pos) => {
+    const p = points[idx];
+    const label = p.generatedAt ? p.generatedAt.split(' ').at(-1) : new Date(p.at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const x = xAt(idx, points.length, axes);
+    ctx.textAlign = pos === 0 ? 'left' : pos === indices.length - 1 ? 'right' : 'center';
+    ctx.fillText(label, Math.max(axes.left, Math.min(width - axes.right, x)), axes.top + axes.plotH + 22);
+  });
+  ctx.textAlign = 'start';
+}
+
+function drawSectionsChart(canvas, history) {
+  const { ctx, width, height } = prepareCanvas(canvas);
+  const axes = drawAxes(ctx, width, height, { min: 0, max: 100, ticks: 5 });
+  if (history.length < 2) return false;
+  ctx.strokeStyle = css('--accent', '#52d3a2');
+  ctx.lineWidth = 3;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  history.forEach((p, i) => {
+    const x = xAt(i, history.length, axes), y = yAt(Number(p.sectionsPct || 0), axes);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  drawTimeLabels(ctx, history, axes, width);
+  return true;
+}
+
+function drawCandidatesChart(canvas, history, legendElement) {
+  const { ctx, width, height } = prepareCanvas(canvas);
+  if (history.length < 2) {
+    drawAxes(ctx, width, height, { min: 0, max: 100, ticks: 5 });
+    legendElement.innerHTML = '';
+    return false;
+  }
+  const latest = history.at(-1);
+  const top = (latest.candidates || []).slice(0, 5);
+  const maxPct = Math.max(10, ...top.map(c => Number(c.percent || 0)));
+  const chartMax = Math.min(100, Math.ceil(maxPct / 10) * 10 + 10);
+  const axes = drawAxes(ctx, width, height, { min: 0, max: chartMax, ticks: 5 });
+
+  legendElement.innerHTML = top.map((c, i) => `<span><i style="background:${PALETTE[i % PALETTE.length]}"></i>${escapeHtml(c.name)} · ${escapeHtml(c.party)}</span>`).join('');
+
+  top.forEach((candidate, ci) => {
+    const id = candidate.id;
+    ctx.strokeStyle = PALETTE[ci % PALETTE.length];
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    let started = false;
+    history.forEach((snap, i) => {
+      const found = (snap.candidates || []).find(c => c.id === id);
+      if (!found) return;
+      const x = xAt(i, history.length, axes), y = yAt(Number(found.percent || 0), axes);
+      if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  });
+  drawTimeLabels(ctx, history, axes, width);
+  return true;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>'"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[ch]));
+}
+
+
+/* === map.js === */
+const STATE_GEOJSON_URL = 'https://cdn.jsdelivr.net/gh/henriquemalvar/br-geojson@main/dist/estados.geojson';
+const MUNICIPAL_GEOJSON_URL = uf => `https://cdn.jsdelivr.net/gh/henriquemalvar/br-geojson@main/dist/municipios/${uf.toUpperCase()}.geojson`;
+
+const FALLBACK_LAYOUT = {
+  RR:[2.1,0.4], AP:[5.8,0.5], AM:[1.6,1.6], PA:[4.4,1.7], MA:[6.4,2.0], CE:[8.0,2.2], RN:[9.5,2.1],
+  AC:[0.2,2.7], RO:[1.8,3.0], TO:[5.2,3.0], PI:[6.7,3.0], PB:[9.3,3.0], MT:[3.1,4.1], GO:[5.2,4.25],
+  BA:[7.1,4.2], PE:[9.1,3.85], AL:[9.6,4.55], SE:[9.1,5.0], MS:[3.5,5.5], MG:[6.2,5.5], ES:[8.0,5.8],
+  SP:[5.4,6.7], RJ:[7.3,6.75], PR:[4.9,7.75], SC:[5.1,8.65], RS:[4.6,9.7], DF:[5.25,4.65],
+};
+
+const geoCache = new Map();
+const ns = 'http://www.w3.org/2000/svg';
+
+async function fetchGeoJson(url) {
+  if (geoCache.has(url)) return geoCache.get(url);
+  const promise = fetch(url, { cache: 'force-cache', headers: { Accept: 'application/geo+json,application/json' } })
+    .then(r => {
+      if (!r.ok) throw new Error(`GeoJSON respondeu ${r.status}`);
+      return r.json();
+    });
+  geoCache.set(url, promise);
+  try { return await promise; }
+  catch (error) { geoCache.delete(url); throw error; }
+}
+
+function walkCoords(geometry, visitor) {
+  if (!geometry?.coordinates) return;
+  const visit = coords => {
+    if (typeof coords?.[0] === 'number' && typeof coords?.[1] === 'number') visitor(coords[0], coords[1]);
+    else if (Array.isArray(coords)) coords.forEach(visit);
+  };
+  visit(geometry.coordinates);
+}
+
+function bboxOf(features) {
+  let minLon = Infinity, minLat = Infinity, maxLon = -Infinity, maxLat = -Infinity;
+  features.forEach(feature => walkCoords(feature.geometry, (lon, lat) => {
+    minLon = Math.min(minLon, lon); maxLon = Math.max(maxLon, lon);
+    minLat = Math.min(minLat, lat); maxLat = Math.max(maxLat, lat);
+  }));
+  if (!Number.isFinite(minLon)) return [-74, -34, -34, 6];
+  return [minLon, minLat, maxLon, maxLat];
+}
+
+function projector(bbox, width = 760, height = 700, padding = 24) {
+  const [minLon, minLat, maxLon, maxLat] = bbox;
+  const dx = Math.max(0.0001, maxLon - minLon);
+  const dy = Math.max(0.0001, maxLat - minLat);
+  const usableW = width - padding * 2;
+  const usableH = height - padding * 2;
+  const sx = usableW / dx;
+  const sy = usableH / dy;
+  const scale = Math.min(sx, sy);
+  const drawW = dx * scale;
+  const drawH = dy * scale;
+  const ox = (width - drawW) / 2;
+  const oy = (height - drawH) / 2;
+  return (lon, lat) => [ox + (lon - minLon) * scale, oy + (maxLat - lat) * scale];
+}
+
+function ringPath(ring, project) {
+  return ring.map((coord, index) => {
+    const [x, y] = project(coord[0], coord[1]);
+    return `${index ? 'L' : 'M'}${x.toFixed(2)},${y.toFixed(2)}`;
+  }).join(' ') + ' Z';
+}
+
+function geometryPath(geometry, project) {
+  if (!geometry) return '';
+  if (geometry.type === 'Polygon') return geometry.coordinates.map(r => ringPath(r, project)).join(' ');
+  if (geometry.type === 'MultiPolygon') return geometry.coordinates.flatMap(p => p.map(r => ringPath(r, project))).join(' ');
+  return '';
+}
+
+function attachInteractive(group, label, callback, value) {
+  group.setAttribute('tabindex', '0');
+  group.setAttribute('role', 'button');
+  group.setAttribute('aria-label', label);
+  group.addEventListener('click', () => callback(value));
+  group.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); callback(value); }
+  });
+}
+
+function fallbackBrazilMap(svg, states, onSelect) {
+  const width = 62, height = 48, sx = 68, sy = 61, ox = 28, oy = 20;
+  svg.innerHTML = '';
+  svg.dataset.mapMode = 'fallback';
+  svg.setAttribute('viewBox', '0 0 760 700');
+  states.forEach(([uf, name]) => {
+    const [gx, gy] = FALLBACK_LAYOUT[uf];
+    const g = document.createElementNS(ns, 'g');
+    g.classList.add('map-state');
+    g.dataset.uf = uf;
+    attachInteractive(g, `${name} (${uf})`, onSelect, uf);
+    const rect = document.createElementNS(ns, 'rect');
+    rect.setAttribute('x', String(ox + gx * sx)); rect.setAttribute('y', String(oy + gy * sy));
+    rect.setAttribute('rx', uf === 'DF' ? '10' : '16');
+    rect.setAttribute('width', String(uf === 'DF' ? 44 : width)); rect.setAttribute('height', String(uf === 'DF' ? 36 : height));
+    const text = document.createElementNS(ns, 'text');
+    text.setAttribute('x', String(ox + gx * sx + (uf === 'DF' ? 22 : width / 2)));
+    text.setAttribute('y', String(oy + gy * sy + (uf === 'DF' ? 23 : 30)));
+    text.setAttribute('text-anchor', 'middle'); text.textContent = uf;
+    const title = document.createElementNS(ns, 'title'); title.textContent = name;
+    g.append(rect, text, title); svg.append(g);
+  });
+}
+
+async function renderBrazilMap(svg, states, onSelect) {
+  svg.innerHTML = '<text x="380" y="350" text-anchor="middle" class="map-loading-text">Carregando mapa geográfico…</text>';
+  try {
+    const geo = await fetchGeoJson(STATE_GEOJSON_URL);
+    const features = Array.isArray(geo.features) ? geo.features : [];
+    if (!features.length) throw new Error('GeoJSON sem estados.');
+    svg.innerHTML = '';
+    svg.dataset.mapMode = 'geographic';
+    svg.setAttribute('viewBox', '0 0 760 700');
+    const project = projector(bboxOf(features));
+    const known = new Map(states);
+    features.forEach(feature => {
+      const uf = String(feature.properties?.sigla || feature.id || '').toUpperCase();
+      if (!known.has(uf)) return;
+      const name = feature.properties?.nome || known.get(uf) || uf;
+      const g = document.createElementNS(ns, 'g');
+      g.classList.add('map-state', 'geo-state'); g.dataset.uf = uf;
+      attachInteractive(g, `${name} (${uf})`, onSelect, uf);
+      const path = document.createElementNS(ns, 'path');
+      path.setAttribute('d', geometryPath(feature.geometry, project));
+      const title = document.createElementNS(ns, 'title'); title.textContent = name;
+      g.append(path, title); svg.append(g);
+    });
+    return { mode:'geographic', source:STATE_GEOJSON_URL };
+  } catch (error) {
+    fallbackBrazilMap(svg, states, onSelect);
+    return { mode:'fallback', error };
+  }
+}
+
+function updateBrazilMap(svg, summaries, selectedUf) {
+  const map = new Map((summaries || []).map(x => [x.uf, x]));
+  svg.querySelectorAll('.map-state').forEach(g => {
+    const uf = g.dataset.uf;
+    const summary = map.get(uf);
+    g.classList.toggle('selected', uf === selectedUf);
+    const pct = Number(summary?.sectionsPct || 0);
+    const level = pct >= 95 ? 'v5' : pct >= 75 ? 'v4' : pct >= 50 ? 'v3' : pct >= 25 ? 'v2' : pct > 0 ? 'v1' : 'v0';
+    g.dataset.level = level;
+    const title = g.querySelector('title');
+    if (title && summary) {
+      const top = summary.top?.[0];
+      title.textContent = `${summary.state || uf} · ${pct.toFixed(2)}% das seções${top ? ` · ${top.name}: ${Number(top.percent || 0).toFixed(2)}%` : ''}`;
+    }
+  });
+}
+
+async function renderMunicipalityMap(svg, uf, { selectedIbge = '', ranking = [], onSelect } = {}) {
+  const url = MUNICIPAL_GEOJSON_URL(uf);
+  svg.innerHTML = '<text x="380" y="350" text-anchor="middle" class="map-loading-text">Carregando limites municipais…</text>';
+  const geo = await fetchGeoJson(url);
+  const features = Array.isArray(geo.features) ? geo.features : [];
+  if (!features.length) throw new Error('GeoJSON municipal indisponível.');
+  const project = projector(bboxOf(features));
+  const byIbge = new Map((ranking || []).map(item => [String(item.ibge || ''), item]));
+  svg.innerHTML = '';
+  svg.dataset.mapMode = 'municipal';
+  svg.setAttribute('viewBox', '0 0 760 700');
+  features.forEach(feature => {
+    const ibge = String(feature.properties?.cd_geocmu || feature.id || '');
+    const name = feature.properties?.nome || ibge;
+    const item = byIbge.get(ibge);
+    const g = document.createElementNS(ns, 'g');
+    g.classList.add('map-municipality');
+    g.dataset.ibge = ibge;
+    g.classList.toggle('selected', Boolean(selectedIbge) && ibge === String(selectedIbge));
+    if (item) {
+      const p = Number(item.percent || 0);
+      g.dataset.level = p >= 60 ? 'v5' : p >= 50 ? 'v4' : p >= 40 ? 'v3' : p >= 30 ? 'v2' : p > 0 ? 'v1' : 'v0';
+    }
+    attachInteractive(g, `${name}${item ? ` · ${Number(item.percent || 0).toFixed(2)}%` : ''}`, onSelect || (() => {}), { ibge, name });
+    const path = document.createElementNS(ns, 'path'); path.setAttribute('d', geometryPath(feature.geometry, project));
+    const title = document.createElementNS(ns, 'title');
+    title.textContent = item ? `${name} · ${Number(item.percent || 0).toFixed(2)}% · ${Number(item.votes || 0).toLocaleString('pt-BR')} votos` : name;
+    g.append(path, title); svg.append(g);
+  });
+  return { mode:'municipal', source:url, features };
+}
+
+
+/* === app.js === */
+const $ = id => document.getElementById(id);
+const els = {
+  turno: $('turno'), cargo: $('cargo'), abrangencia: $('abrangencia'), uf: $('uf'), ufField: $('ufField'),
+  municipio: $('municipio'), municipioField: $('municipioField'), refresh: $('refreshButton'), updatedAt: $('updatedAt'),
+  connectionBadge: $('connectionBadge'), dataSourceBadge: $('dataSourceBadge'), notice: $('notice'), search: $('searchInput'),
+  candidateList: $('candidateList'), template: $('candidateTemplate'), loading: $('loadingState'), empty: $('emptyState'),
+  pctSecoes: $('pctSecoes'), pctSecoesBar: $('pctSecoesBar'), secoesDetail: $('secoesDetail'), eleitorado: $('eleitorado'),
+  comparecimento: $('comparecimento'), votosValidos: $('votosValidos'), votosTotais: $('votosTotais'), brancosNulos: $('brancosNulos'),
+  brancosNulosPct: $('brancosNulosPct'), scopeLabel: $('scopeLabel'), themeToggle: $('themeToggle'), liveLabel: $('liveLabel'),
+  resultTitle: $('resultTitle'), resultSubtitle: $('resultSubtitle'), brazilMap: $('brazilMap'), compareStatesButton: $('compareStatesButton'),
+  mapStateName: $('mapStateName'), mapStateMeta: $('mapStateMeta'), mapStateCandidates: $('mapStateCandidates'), openStateButton: $('openStateButton'),
+  stateCompareStatus: $('stateCompareStatus'), stateComparison: $('stateComparison'), stateSearchInput: $('stateSearchInput'),
+  sectionsChart: $('sectionsChart'), candidatesChart: $('candidatesChart'), sectionsChartEmpty: $('sectionsChartEmpty'),
+  candidatesChartEmpty: $('candidatesChartEmpty'), candidateChartLegend: $('candidateChartLegend'), clearHistoryButton: $('clearHistoryButton'),
+  electedGrid: $('electedGrid'), electedNotice: $('electedNotice'), loadElectedButton: $('loadElectedButton'),
+  loadNationalElectedButton: $('loadNationalElectedButton'), showStatesMapButton: $('showStatesMapButton'),
+  showMunicipalMapButton: $('showMunicipalMapButton'), mapModeStatus: $('mapModeStatus'),
+  loadNationalButton: $('loadNationalButton'), nationalStatus: $('nationalStatus'), nationalPresident: $('nationalPresident'),
+  nationalGovernors: $('nationalGovernors'), nationalSenate: $('nationalSenate'),
+  rankingCandidate: $('rankingCandidate'), loadStateRankingButton: $('loadStateRankingButton'), stateRankingStatus: $('stateRankingStatus'),
+  stateRanking: $('stateRanking'), loadMunicipalBatchButton: $('loadMunicipalBatchButton'), loadAllMunicipalButton: $('loadAllMunicipalButton'),
+  stopMunicipalButton: $('stopMunicipalButton'), municipalRankingStatus: $('municipalRankingStatus'), municipalRanking: $('municipalRanking'),
+};
+
+const DEMO = new URLSearchParams(location.search).get('demo') === '1' || location.hash === '#demo';
+const POLL_MS = Number(window.ELEICOES_APP_CONFIG?.pollMs || 30000);
+let currentResult = null;
+let activeQueryKey = '';
+let timer = null;
+let controller = null;
+let municipalityController = null;
+let comparisonController = null;
+let comparisonData = [];
+let selectedMapUf = '';
+let currentHistory = [];
+let activeTab = 'apurar';
+let currentMunicipalities = [];
+let currentMunicipalitiesUf = '';
+let municipalRankingRows = [];
+let municipalRankingCursor = 0;
+let municipalRankingController = null;
+let mapView = 'states';
+let lastRankingQueryKey = '';
+
+const DEMO_NAMES = [
+  ['Candidata Aurora','PDA','10'], ['Candidato Horizonte','PDB','20'], ['Candidata Verde','PDC','30'], ['Candidato Sul','PDD','40'],
+];
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>'"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[ch]));
+}
+
+function populateStates() {
+  els.uf.innerHTML = STATES.map(([code, name]) => `<option value="${code}">${code} — ${name}</option>`).join('');
+  els.uf.value = localStorage.getItem('eleicoes2026.uf') || 'RN';
+}
+
+function paramsFromControls() {
+  const office = Number(els.cargo.value);
+  const scope = els.abrangencia.value;
+  const uf = scope === 'br' ? 'BR' : els.uf.value;
+  const municipality = scope === 'municipio' ? els.municipio.value : '';
+  return { turn: Number(els.turno.value), office, scope, uf, municipality };
+}
+
+function syncControlRules({ loadMunicipalities = true } = {}) {
+  const office = Number(els.cargo.value);
+  const cfg = OFFICES[office];
+  const scope = els.abrangencia.value;
+  const secondTurnOption = els.turno.querySelector('option[value="2"]');
+  secondTurnOption.disabled = !cfg.secondRound;
+  if (!cfg.secondRound && els.turno.value === '2') els.turno.value = '1';
+  const brOption = els.abrangencia.querySelector('option[value="br"]');
+  brOption.disabled = office !== 1;
+  if (office !== 1 && scope === 'br') els.abrangencia.value = 'uf';
+  if (cfg.only) {
+    els.uf.value = cfg.only;
+    els.uf.disabled = true;
+  } else {
+    els.uf.disabled = false;
+  }
+  const actualScope = els.abrangencia.value;
+  els.ufField.classList.toggle('hidden', actualScope === 'br');
+  els.municipioField.classList.toggle('hidden', actualScope !== 'municipio');
+  if (actualScope === 'municipio' && loadMunicipalities) refreshMunicipalities();
+  updateScopeLabel();
+}
+
+function updateScopeLabel() {
+  const p = paramsFromControls();
+  let scopeText = 'Brasil';
+  if (p.scope === 'uf') scopeText = `${stateName(p.uf)} (${p.uf})`;
+  if (p.scope === 'municipio') {
+    const option = els.municipio.selectedOptions[0];
+    scopeText = option?.value ? `${option.textContent} · ${p.uf}` : `${stateName(p.uf)} (${p.uf})`;
+  }
+  els.scopeLabel.textContent = `${scopeText} · ${officeName(p.office)}`;
+}
+
+async function refreshMunicipalities() {
+  municipalityController?.abort();
+  municipalityController = new AbortController();
+  const { office, turn, uf } = paramsFromControls();
+  els.municipio.disabled = true;
+  els.municipio.innerHTML = '<option value="">Carregando municípios…</option>';
+  try {
+    let list;
+    if (DEMO) {
+      list = [{ code:'16935', ibge:'2412203', name:'São José de Mipibu' }, { code:'17612', ibge:'2408102', name:'Natal' }, { code:'17515', ibge:'2403251', name:'Parnamirim' }];
+    } else {
+      list = await fetchMunicipalities({ office, turn, uf }, { signal: municipalityController.signal });
+    }
+    if (!list.length) throw new Error('Lista de municípios não disponível.');
+    currentMunicipalities = list;
+    currentMunicipalitiesUf = uf;
+    els.municipio.innerHTML = list.map(m => `<option value="${escapeHtml(m.code)}" data-ibge="${escapeHtml(m.ibge || '')}">${escapeHtml(m.name)}${m.capital ? ' ★' : ''}</option>`).join('');
+    const saved = localStorage.getItem(`eleicoes2026.municipio.${uf}`);
+    if (saved && list.some(m => m.code === saved)) els.municipio.value = saved;
+    els.municipio.disabled = false;
+    updateScopeLabel();
+  } catch (error) {
+    if (error.name === 'AbortError') return;
+    els.municipio.innerHTML = '<option value="">Municípios indisponíveis</option>';
+    showNotice('Não foi possível carregar a lista de municípios para esta eleição. Tente novamente em alguns instantes.');
+  }
+}
+
+function setBusy(busy) {
+  els.refresh.disabled = busy;
+  els.loading.classList.toggle('hidden', !busy || Boolean(currentResult));
+}
+function setConnection(kind, text) {
+  els.connectionBadge.className = `status-badge ${kind}`;
+  els.connectionBadge.textContent = text;
+}
+function showNotice(message, type = 'warning') {
+  els.notice.textContent = message;
+  els.notice.classList.remove('hidden');
+  els.notice.dataset.type = type;
+}
+function hideNotice() { els.notice.classList.add('hidden'); }
+
+function demoResult(params) {
+  const baseVotes = params.office === 1 ? [40124567, 35677801, 18226491, 7412300] : [1335200, 1188340, 672190, 114230];
+  const scale = params.scope === 'br' ? 1 : params.scope === 'uf' ? 0.08 : 0.0015;
+  const votes = baseVotes.map(v => Math.max(1, Math.round(v * scale)));
+  const total = votes.reduce((a,b) => a+b, 0);
+  const candidates = DEMO_NAMES.map((n, i) => ({
+    sqcand: `demo-${i}`, number: n[2], name: n[0], fullName: n[0], party: n[1], coalition: '', votes: votes[i],
+    percent: votes[i] / total * 100, elected: false, status: 'DADO FICTÍCIO',
+    vices: params.office === 1 ? [{ name:`Vice ${i+1}`, party:n[1], type:'v' }] : [], photo: '',
+  }));
+  const pctSections = Math.min(100, 38 + (Date.now() / 5000 % 58));
+  return {
+    office: params.office, officeName: officeName(params.office), scopeCode: params.scope === 'br' ? 'br' : params.uf.toLowerCase(), seats: params.office === 5 ? 2 : 1,
+    generatedAt: new Date().toLocaleString('pt-BR'), final: false, rawId: `demo-${Math.floor(Date.now()/5000)}`,
+    sections: { total:472000, counted:Math.round(472000*pctSections/100), percent:pctSections },
+    electorate: { total:158765543, turnout:103148282, turnoutPct:64.97, abstention:55617261, abstentionPct:35.03 },
+    votes: { total:103148282, valid:total, blank:2145000, blankPct:2.08, null:3357000, nullPct:3.25 }, candidates,
+  };
+}
+
+async function load({ manual = false } = {}) {
+  clearTimeout(timer);
+  controller?.abort();
+  controller = new AbortController();
+  const params = paramsFromControls();
+  if (params.scope === 'municipio' && !params.municipality) {
+    showNotice('Selecione um município antes de consultar.');
+    return;
+  }
+  const key = queryKey(params);
+  activeQueryKey = key;
+  updateScopeLabel();
+  if (manual || !currentResult) setBusy(true);
+  hideNotice();
+
+  try {
+    const result = DEMO ? demoResult(params) : await fetchResult(params, { signal: controller.signal });
+    if (key !== activeQueryKey) return;
+    currentResult = result;
+    renderResult(result, params);
+    currentHistory = appendHistory(key, result);
+    if (!DEMO && isWorkerEnabled()) {
+      const remote = await fetchRemoteHistory(key, { signal: controller.signal });
+      currentHistory = mergeHistories(currentHistory, remote);
+    }
+    renderHistory();
+    setConnection('ok', DEMO ? 'Modo demonstração' : result.final ? 'Totalização final' : 'Dados atualizados');
+    if (DEMO) showNotice('MODO DEMONSTRAÇÃO: nomes, partidos, números e votos são fictícios e servem apenas para testar a interface.', 'warning');
+  } catch (error) {
+    if (error.name === 'AbortError') return;
+    console.error(error);
+    setConnection('error', 'Falha na atualização');
+    showNotice(`${error.message || 'Não foi possível consultar a fonte.'} Os dados exibidos, se houver, permanecem da última atualização bem-sucedida.`);
+    if (!currentResult) {
+      els.candidateList.innerHTML = '';
+      els.empty.classList.remove('hidden');
+    }
+  } finally {
+    setBusy(false);
+    timer = setTimeout(() => load(), POLL_MS);
+  }
+}
+
+function renderResult(result, params) {
+  els.empty.classList.toggle('hidden', result.candidates.length > 0);
+  els.updatedAt.textContent = result.generatedAt || '—';
+  els.pctSecoes.textContent = fmtPct(result.sections.percent);
+  els.pctSecoesBar.style.width = `${Math.max(0, Math.min(100, result.sections.percent))}%`;
+  els.secoesDetail.textContent = `${fmtInt(result.sections.counted)} de ${fmtInt(result.sections.total)} seções`;
+  els.eleitorado.textContent = fmtInt(result.electorate.total);
+  els.comparecimento.textContent = `Comparecimento: ${fmtInt(result.electorate.turnout)} · ${fmtPct(result.electorate.turnoutPct)}`;
+  els.votosValidos.textContent = fmtInt(result.votes.valid);
+  els.votosTotais.textContent = `Total computado: ${fmtInt(result.votes.total)}`;
+  const invalid = result.votes.blank + result.votes.null;
+  els.brancosNulos.textContent = fmtInt(invalid);
+  const invalidPct = result.votes.total ? invalid / result.votes.total * 100 : result.votes.blankPct + result.votes.nullPct;
+  els.brancosNulosPct.textContent = `${fmtPct(invalidPct)} dos votos computados`;
+  els.resultTitle.textContent = result.officeName || officeName(result.office);
+  els.resultSubtitle.textContent = result.final
+    ? 'Totalização marcada como final pelo arquivo consultado.'
+    : 'Ordenados pelos votos válidos informados no arquivo mais recente.';
+  renderCandidates(result.candidates);
+  renderCurrentElected(result);
+  syncRankingCandidateOptions(result);
+  updateScopeLabel();
+}
+
+function renderCandidates(candidates) {
+  const term = els.search.value.trim().toLocaleLowerCase('pt-BR');
+  const filtered = candidates.filter(c => !term || [c.name, c.fullName, c.party, c.number].some(v => String(v).toLocaleLowerCase('pt-BR').includes(term)));
+  els.candidateList.innerHTML = '';
+  filtered.forEach(candidate => {
+    const node = els.template.content.firstElementChild.cloneNode(true);
+    const img = node.querySelector('.candidate-photo');
+    const placeholder = node.querySelector('.candidate-placeholder');
+    if (candidate.photo) {
+      img.src = candidate.photo;
+      img.alt = `Foto de ${candidate.name}`;
+      img.addEventListener('error', () => { img.remove(); placeholder.textContent = candidate.number || '—'; });
+    } else {
+      img.remove(); placeholder.textContent = candidate.number || '—';
+    }
+    node.querySelector('.candidate-number').textContent = candidate.number ? `Nº ${candidate.number}` : 'Sem número';
+    node.querySelector('.candidate-party').textContent = candidate.party || '—';
+    node.querySelector('.candidate-name').textContent = candidate.name;
+    const vice = candidate.vices?.find(v => v.type === 'v') || candidate.vices?.[0];
+    node.querySelector('.candidate-vice').textContent = vice ? `Vice: ${vice.name}${vice.party ? ` · ${vice.party}` : ''}` : '';
+    node.querySelector('.candidate-score strong').textContent = fmtPct(candidate.percent);
+    node.querySelector('.candidate-score span').textContent = `${fmtInt(candidate.votes)} votos`;
+    node.querySelector('.candidate-progress .progress-bar').style.width = `${Math.max(0, Math.min(100, candidate.percent))}%`;
+    const status = node.querySelector('.candidate-status');
+    status.textContent = candidate.elected ? 'ELEITO' : candidate.runoff ? '2º TURNO' : candidate.status || (candidate.attributed ? 'SITUAÇÃO OFICIAL' : '');
+    status.dataset.elected = String(candidate.elected);
+    status.dataset.runoff = String(Boolean(candidate.runoff));
+    node.querySelector('.candidate-coalition').textContent = candidate.coalition || '';
+    els.candidateList.append(node);
+  });
+  els.empty.classList.toggle('hidden', filtered.length > 0);
+}
+
+function renderHistory() {
+  const hasSections = drawSectionsChart(els.sectionsChart, currentHistory);
+  const hasCandidates = drawCandidatesChart(els.candidatesChart, currentHistory, els.candidateChartLegend);
+  els.sectionsChartEmpty.classList.toggle('hidden', hasSections);
+  els.candidatesChartEmpty.classList.toggle('hidden', hasCandidates);
+}
+
+function renderCurrentElected(result) {
+  const elected = result.candidates.filter(c => c.elected);
+  if (!elected.length) {
+    els.electedGrid.innerHTML = '';
+    els.electedNotice.textContent = result.final
+      ? 'A totalização está marcada como final, mas esta consulta não possui candidatos com indicação de eleito.'
+      : 'Ainda não há candidatos marcados como eleitos nesta consulta.';
+    return;
+  }
+  els.electedNotice.textContent = `${elected.length} candidato(s) marcado(s) como eleito(s) na consulta atual.`;
+  els.electedGrid.innerHTML = elected.map(c => electedCardHtml(result.officeName, c)).join('');
+}
+
+function electedCardHtml(cargo, c, uf = '') {
+  return `<article class="elected-item">
+    <span class="elected-badge">ELEITO</span>
+    <small>${escapeHtml(cargo)}${uf ? ` · ${escapeHtml(uf)}` : ''}</small>
+    <strong>${escapeHtml(c.name)}</strong>
+    <span>${escapeHtml(c.party)} · Nº ${escapeHtml(c.number)} · ${fmtInt(c.votes)} votos</span>
+  </article>`;
+}
+
+async function loadAllElectedForState() {
+  const params = paramsFromControls();
+  if (params.scope === 'br') {
+    renderCurrentElected(currentResult || { candidates:[], officeName:'Presidente', final:false });
+    return;
+  }
+  const uf = params.uf;
+  els.loadElectedButton.disabled = true;
+  els.electedNotice.textContent = `Consultando cargos de ${stateName(uf)}…`;
+  els.electedGrid.innerHTML = '';
+  const offices = uf === 'DF' ? [3,5,6,8] : [3,5,6,7];
+  const cards = [];
+  try {
+    for (const office of offices) {
+      try {
+        const result = DEMO ? demoResult({ ...params, office, scope:'uf' }) : await fetchResult({ ...params, office, scope:'uf', municipality:'' });
+        result.candidates.filter(c => c.elected).forEach(c => cards.push(electedCardHtml(result.officeName, c, uf)));
+      } catch { /* arquivo individual pode ainda não estar disponível */ }
+    }
+    els.electedGrid.innerHTML = cards.join('');
+    els.electedNotice.textContent = cards.length
+      ? `${cards.length} registro(s) com indicação de eleito encontrado(s) em ${uf}.`
+      : `Ainda não há registros marcados como eleitos nos cargos consultados de ${uf}.`;
+  } finally {
+    els.loadElectedButton.disabled = false;
+  }
+}
+
+async function loadStateComparison() {
+  comparisonController?.abort();
+  comparisonController = new AbortController();
+  const { office, turn } = paramsFromControls();
+  els.compareStatesButton.disabled = true;
+  els.stateCompareStatus.textContent = 'Carregando panorama das UFs…';
+  comparisonData = [];
+  try {
+    if (DEMO) {
+      comparisonData = STATES.map(([uf, state], i) => ({
+        uf, state, sectionsPct: Math.min(100, 44 + i * 2.1), validVotes: 100000 + i*23111,
+        top: DEMO_NAMES.slice(0,3).map((n,j) => ({ name:n[0], party:n[1], number:n[2], votes:80000-j*15000+i*450, percent:48-j*13+(i%5)*0.3 })),
+      }));
+    } else {
+      comparisonData = await fetchStateComparison({ office, turn }, {
+        signal: comparisonController.signal,
+        onProgress: (done, total) => { els.stateCompareStatus.textContent = `Consultando UFs: ${done}/${total}…`; },
+      });
+    }
+    els.stateCompareStatus.textContent = `Panorama carregado para ${officeName(office)} · ${turn}º turno.`;
+    updateBrazilMap(els.brazilMap, comparisonData, selectedMapUf);
+    renderStateComparison();
+    if (selectedMapUf) renderMapInspector(selectedMapUf);
+  } catch (error) {
+    if (error.name !== 'AbortError') {
+      els.stateCompareStatus.textContent = `Falha ao carregar comparação: ${error.message || 'erro desconhecido'}`;
+    }
+  } finally {
+    els.compareStatesButton.disabled = false;
+  }
+}
+
+function renderStateComparison() {
+  const term = els.stateSearchInput.value.trim().toLocaleLowerCase('pt-BR');
+  const data = comparisonData.filter(item => {
+    if (!term) return true;
+    return [item.uf, item.state, ...(item.top || []).flatMap(c => [c.name, c.party])].some(v => String(v || '').toLocaleLowerCase('pt-BR').includes(term));
+  });
+  els.stateComparison.innerHTML = data.map(item => {
+    const top = item.top?.[0];
+    if (item.error) return `<button class="state-row error-row" data-uf="${item.uf}"><strong>${item.uf}</strong><span>Indisponível</span><span>—</span></button>`;
+    return `<button class="state-row" data-uf="${item.uf}">
+      <strong>${item.uf}</strong>
+      <span><b>${escapeHtml(top?.name || 'Sem candidato')}</b><small>${escapeHtml(top?.party || '')}${top ? ` · ${fmtPct(top.percent)}` : ''}</small></span>
+      <span class="state-progress-text">${fmtPct(item.sectionsPct)} seções</span>
+    </button>`;
+  }).join('');
+  els.stateComparison.querySelectorAll('[data-uf]').forEach(button => button.addEventListener('click', () => selectMapState(button.dataset.uf)));
+}
+
+function selectMapState(uf) {
+  selectedMapUf = uf;
+  updateBrazilMap(els.brazilMap, comparisonData, selectedMapUf);
+  renderMapInspector(uf);
+}
+
+function renderMapInspector(uf) {
+  const item = comparisonData.find(x => x.uf === uf);
+  els.mapStateName.textContent = `${stateName(uf)} (${uf})`;
+  if (!item || item.error) {
+    els.mapStateMeta.textContent = item?.error ? 'Resultado não disponível nesta carga.' : 'Carregue o panorama das 27 UFs para visualizar os dados deste estado.';
+    els.mapStateCandidates.innerHTML = '';
+  } else {
+    els.mapStateMeta.textContent = `${fmtPct(item.sectionsPct)} das seções totalizadas · ${fmtInt(item.validVotes)} votos válidos na consulta.`;
+    els.mapStateCandidates.innerHTML = (item.top || []).map((c, i) => `<div><span>${i+1}</span><p><strong>${escapeHtml(c.name)}</strong><small>${escapeHtml(c.party)} · ${fmtPct(c.percent)}</small></p></div>`).join('');
+  }
+  els.openStateButton.classList.remove('hidden');
+  els.openStateButton.dataset.uf = uf;
+}
+
+function openSelectedState() {
+  const uf = els.openStateButton.dataset.uf;
+  if (!uf) return;
+  currentMunicipalities = []; currentMunicipalitiesUf = '';
+  resetMunicipalRanking();
+  selectedMapUf = uf;
+  els.abrangencia.value = 'uf';
+  els.uf.value = uf;
+  localStorage.setItem('eleicoes2026.uf', uf);
+  syncControlRules({ loadMunicipalities:false });
+  activateTab('apurar');
+  load({ manual:true });
+}
+
+
+function syncRankingCandidateOptions(result) {
+  if (!els.rankingCandidate || !result) return;
+  const previous = els.rankingCandidate.value;
+  els.rankingCandidate.innerHTML = result.candidates.map(c => `<option value="${escapeHtml(c.sqcand)}">${escapeHtml(c.name)} · ${escapeHtml(c.party)} · ${escapeHtml(c.number)}</option>`).join('');
+  if (previous && result.candidates.some(c => c.sqcand === previous)) els.rankingCandidate.value = previous;
+  if (lastRankingQueryKey !== activeQueryKey) {
+    resetMunicipalRanking(false);
+    lastRankingQueryKey = activeQueryKey;
+  }
+}
+
+
+function selectedRankingCandidate() {
+  const sqcand = els.rankingCandidate?.value || '';
+  return currentResult?.candidates.find(c => c.sqcand === sqcand) || currentResult?.candidates[0] || null;
+}
+
+async function showStatesMap() {
+  mapView = 'states';
+  els.mapModeStatus.textContent = 'Mapa: carregando limites estaduais…';
+  const result = await renderBrazilMap(els.brazilMap, STATES, selectMapState);
+  updateBrazilMap(els.brazilMap, comparisonData, selectedMapUf);
+  els.mapModeStatus.textContent = result.mode === 'geographic'
+    ? 'Mapa: limites estaduais geográficos (fonte IBGE via dataset CC0)'
+    : 'Mapa: modo de contingência simplificado';
+}
+
+async function showMunicipalMap() {
+  const uf = selectedMapUf || (paramsFromControls().scope === 'br' ? els.uf.value : paramsFromControls().uf);
+  if (!uf || uf === 'BR') { showNotice('Selecione uma UF antes de abrir o mapa municipal.'); return; }
+  mapView = 'municipal';
+  els.mapModeStatus.textContent = `Mapa: carregando municípios de ${uf}…`;
+  try {
+    if (!currentMunicipalities.length || currentMunicipalitiesUf !== uf) {
+      const p = paramsFromControls();
+      currentMunicipalities = DEMO ? [{ code:'17612', ibge:'2408102', name:'Natal' }] : await fetchMunicipalities({ office:p.office, turn:p.turn, uf });
+      currentMunicipalitiesUf = uf;
+    }
+    const selectedOption = els.municipio.selectedOptions?.[0];
+    const selectedIbge = selectedOption?.dataset?.ibge || '';
+    await renderMunicipalityMap(els.brazilMap, uf, {
+      selectedIbge,
+      ranking: municipalRankingRows,
+      onSelect: ({ ibge, name }) => selectMunicipalityFromMap(uf, ibge, name),
+    });
+    els.mapModeStatus.textContent = `Mapa: limites municipais de ${stateName(uf)} (${uf})`;
+  } catch (error) {
+    console.error(error);
+    els.mapModeStatus.textContent = `Mapa municipal indisponível para ${uf}.`;
+    showNotice('Não foi possível carregar a geometria municipal. O mapa estadual permanece disponível.');
+  }
+}
+
+async function selectMunicipalityFromMap(uf, ibge, name) {
+  const p = paramsFromControls();
+  if (els.uf.value !== uf) els.uf.value = uf;
+  if (!currentMunicipalities.length || !currentMunicipalities.some(m => String(m.ibge) === String(ibge))) {
+    currentMunicipalities = DEMO ? currentMunicipalities : await fetchMunicipalities({ office:p.office, turn:p.turn, uf });
+    currentMunicipalitiesUf = uf;
+  }
+  const match = currentMunicipalities.find(m => String(m.ibge) === String(ibge));
+  if (!match) { els.mapStateMeta.textContent = `${name}: município sem correspondência no arquivo de configuração eleitoral.`; return; }
+  els.abrangencia.value = 'municipio';
+  syncControlRules({ loadMunicipalities:false });
+  els.municipio.innerHTML = currentMunicipalities.map(m => `<option value="${escapeHtml(m.code)}" data-ibge="${escapeHtml(m.ibge || '')}">${escapeHtml(m.name)}${m.capital ? ' ★' : ''}</option>`).join('');
+  els.municipio.disabled = false;
+  els.municipio.value = match.code;
+  localStorage.setItem(`eleicoes2026.municipio.${uf}`, match.code);
+  activateTab('apurar');
+  await load({ manual:true });
+}
+
+function findCandidateInSummary(summary, candidate) {
+  if (!summary || summary.error || !candidate) return null;
+  return (summary.candidates || summary.top || []).find(c => c.number === candidate.number && c.party === candidate.party) || null;
+}
+
+async function loadStateRanking() {
+  const candidate = selectedRankingCandidate();
+  if (!candidate) { els.stateRankingStatus.textContent = 'Nenhum candidato disponível.'; return; }
+  els.loadStateRankingButton.disabled = true;
+  els.stateRankingStatus.textContent = 'Carregando as 27 UFs…';
+  try {
+    const p = paramsFromControls();
+    // Ranking do mesmo candidato entre UFs só é comparável para Presidente.
+    let data;
+    if (p.office === 1) {
+      if (!comparisonData.length || comparisonData.some(x => !x.top)) await loadStateComparison();
+      data = comparisonData.map(item => {
+        const c = findCandidateInSummary(item, candidate);
+        return { uf:item.uf, state:item.state || stateName(item.uf), percent:c?.percent || 0, votes:c?.votes || 0, sectionsPct:item.sectionsPct || 0, available:!item.error };
+      });
+    } else {
+      const result = await fetchResult({ turn:p.turn, office:p.office, scope:'uf', uf:p.uf });
+      data = [{ uf:p.uf, state:stateName(p.uf), percent:(result.candidates.find(c => c.sqcand === candidate.sqcand)?.percent || 0), votes:(result.candidates.find(c => c.sqcand === candidate.sqcand)?.votes || 0), sectionsPct:result.sections.percent, available:true }];
+    }
+    data.sort((a,b) => b.percent - a.percent || b.votes - a.votes);
+    els.stateRanking.innerHTML = data.map((r,i) => rankingRowHtml(i + 1, `${r.state} (${r.uf})`, r.votes, r.percent, r.sectionsPct, r.available)).join('');
+    els.stateRankingStatus.textContent = p.office === 1
+      ? `${candidate.name}: comparação percentual entre UFs.`
+      : `${candidate.name}: este cargo é estadual; o ranking entre UFs não compara o mesmo candidato.`;
+  } catch (error) {
+    els.stateRankingStatus.textContent = `Falha: ${error.message || 'não foi possível carregar.'}`;
+  } finally { els.loadStateRankingButton.disabled = false; }
+}
+
+function rankingRowHtml(pos, label, votes, percent, sectionsPct, available = true) {
+  if (!available) return `<div class="ranking-row muted"><b>${pos}</b><span><strong>${escapeHtml(label)}</strong><small>Indisponível</small></span><em>—</em></div>`;
+  return `<div class="ranking-row"><b>${pos}</b><span><strong>${escapeHtml(label)}</strong><small>${fmtInt(votes)} votos · ${fmtPct(sectionsPct)} das seções</small></span><em>${fmtPct(percent)}</em></div>`;
+}
+
+function resetMunicipalRanking(render = true) {
+  municipalRankingController?.abort();
+  municipalRankingController = null;
+  municipalRankingRows = [];
+  municipalRankingCursor = 0;
+  if (render && els.municipalRanking) {
+    els.municipalRanking.innerHTML = '';
+    els.municipalRankingStatus.textContent = 'Selecione uma UF e um candidato.';
+  }
+}
+
+function renderMunicipalRanking() {
+  const rows = [...municipalRankingRows].filter(r => r.available).sort((a,b) => b.percent - a.percent || b.votes - a.votes || a.name.localeCompare(b.name, 'pt-BR'));
+  els.municipalRanking.innerHTML = rows.map((r,i) => rankingRowHtml(i + 1, r.name, r.votes, r.percent, r.sectionsPct, true)).join('');
+  if (mapView === 'municipal') showMunicipalMap();
+}
+
+async function loadMunicipalRankingBatch({ all = false } = {}) {
+  const p = paramsFromControls();
+  const uf = p.scope === 'br' ? els.uf.value : p.uf;
+  const candidate = selectedRankingCandidate();
+  if (!candidate || !uf || uf === 'BR') { els.municipalRankingStatus.textContent = 'Selecione uma UF e um candidato.'; return; }
+  if (p.office !== 1 && currentResult?.scopeCode && p.scope === 'br') return;
+  municipalRankingController?.abort();
+  municipalRankingController = new AbortController();
+  els.stopMunicipalButton.classList.remove('hidden');
+  els.loadMunicipalBatchButton.disabled = true; els.loadAllMunicipalButton.disabled = true;
+  try {
+    if (!currentMunicipalities.length || currentMunicipalitiesUf !== uf) {
+      currentMunicipalities = DEMO
+        ? [{ code:'17612', ibge:'2408102', name:'Natal' },{ code:'16935', ibge:'2412203', name:'São José de Mipibu' },{ code:'17515', ibge:'2403251', name:'Parnamirim' }]
+        : await fetchMunicipalities({ office:p.office, turn:p.turn, uf }, { signal:municipalRankingController.signal });
+      currentMunicipalitiesUf = uf;
+    }
+    const total = currentMunicipalities.length;
+    const target = all ? total : Math.min(total, municipalRankingCursor + 30);
+    while (municipalRankingCursor < target) {
+      const count = Math.min(30, target - municipalRankingCursor);
+      els.municipalRankingStatus.textContent = `Consultando municípios ${municipalRankingCursor + 1}–${municipalRankingCursor + count} de ${total}…`;
+      const batch = DEMO
+        ? { rows:currentMunicipalities.slice(municipalRankingCursor, municipalRankingCursor + count).map((m,i) => ({ ...m, available:true, votes:1000 + i*123, percent:20 + ((i*13)%55), sectionsPct:100 })), next:municipalRankingCursor + count, total, municipalities:currentMunicipalities }
+        : await fetchMunicipalityRanking({ office:p.office, turn:p.turn, uf, candidateSq:candidate.sqcand, start:municipalRankingCursor, count, municipalities:currentMunicipalities }, {
+          signal:municipalRankingController.signal,
+          onProgress:(done, batchTotal) => { els.municipalRankingStatus.textContent = `Lote: ${done}/${batchTotal} · total carregado ${municipalRankingCursor}/${total}`; },
+        });
+      municipalRankingRows.push(...batch.rows);
+      municipalRankingCursor = batch.next;
+      renderMunicipalRanking();
+      if (!all) break;
+      await new Promise(resolve => setTimeout(resolve, 180));
+    }
+    els.municipalRankingStatus.textContent = `${candidate.name}: ${municipalRankingCursor}/${total} municípios carregados.`;
+  } catch (error) {
+    if (error.name === 'AbortError') els.municipalRankingStatus.textContent = `Carregamento interrompido em ${municipalRankingCursor} municípios.`;
+    else els.municipalRankingStatus.textContent = `Falha: ${error.message || 'erro na consulta municipal.'}`;
+  } finally {
+    els.stopMunicipalButton.classList.add('hidden');
+    els.loadMunicipalBatchButton.disabled = false; els.loadAllMunicipalButton.disabled = false;
+  }
+}
+
+function territoryCard(item, officeLabel) {
+  if (!item || item.error) return `<article class="territory-card muted"><strong>${escapeHtml(item?.uf || '—')}</strong><span>Indisponível</span></article>`;
+  const top = item.top?.[0];
+  return `<article class="territory-card"><div><strong>${escapeHtml(item.uf)}</strong><small>${fmtPct(item.sectionsPct)} seções</small></div><p><b>${escapeHtml(top?.name || 'Sem dados')}</b><span>${escapeHtml(top?.party || '')}${top ? ` · ${fmtPct(top.percent)}` : ''}</span></p>${top?.elected ? '<em>ELEITO</em>' : top?.runoff ? '<em>2º TURNO</em>' : `<em>${escapeHtml(officeLabel)}</em>`}</article>`;
+}
+
+async function loadNationalPanel() {
+  els.loadNationalButton.disabled = true;
+  els.nationalStatus.textContent = 'Consultando Presidência, Governadores e Senado…';
+  try {
+    const turn = Number(els.turno.value);
+    const [president, governors, senate] = await Promise.all([
+      DEMO ? demoResult({ turn, office:1, scope:'br', uf:'BR', municipality:'' }) : fetchResult({ turn, office:1, scope:'br', uf:'BR', municipality:'' }),
+      DEMO ? Promise.resolve(STATES.map(([uf,state],i) => ({ uf,state,sectionsPct:90+i%10,top:[{ name:`Governador ${uf}`,party:'P'+(i%8+1),percent:35+(i%20),votes:100000+i*5000,elected:i%3===0 }] }))) : fetchStateComparison({ office:3, turn }),
+      turn === 2 ? Promise.resolve([]) : (DEMO ? Promise.resolve(STATES.map(([uf,state],i) => ({ uf,state,sectionsPct:88+i%12,top:[{ name:`Senador ${uf}`,party:'P'+(i%9+1),percent:18+(i%25),votes:80000+i*3000,elected:i%4===0 }] }))) : fetchStateComparison({ office:5, turn })),
+    ]);
+    els.nationalPresident.innerHTML = president.candidates.slice(0,5).map((c,i) => rankingRowHtml(i+1, `${c.name} · ${c.party}`, c.votes, c.percent, president.sections.percent, true)).join('');
+    els.nationalGovernors.innerHTML = governors.map(x => territoryCard(x, 'mais votado')).join('');
+    els.nationalSenate.innerHTML = turn === 2 ? '<div class="inline-status">Senador não possui 2º turno.</div>' : senate.map(x => territoryCard(x, 'mais votado')).join('');
+    const govOk = governors.filter(x => !x.error).length, senOk = senate.filter(x => !x.error).length;
+    els.nationalStatus.textContent = turn === 2 ? `2º turno: Presidência + ${govOk}/27 UFs com arquivo de Governador disponível.` : `Presidência + ${govOk}/27 UFs para Governador + ${senOk}/27 UFs para Senado.`;
+  } catch (error) { els.nationalStatus.textContent = `Falha ao carregar painel nacional: ${error.message || 'erro desconhecido'}`; }
+  finally { els.loadNationalButton.disabled = false; }
+}
+
+async function loadNationalElected() {
+  const turn = Number(els.turno.value);
+  els.loadNationalElectedButton.disabled = true;
+  els.electedNotice.textContent = 'Consultando arquivos nacionais de eleitos (EA10)…';
+  try {
+    const all = [];
+    for (const office of (turn === 2 ? [3] : [3,5,6])) {
+      try {
+        const rows = DEMO ? [] : await fetchElected({ office, turn });
+        rows.forEach(c => all.push(electedCardHtml(officeName(office), { ...c, elected:true }, c.uf || 'BR')));
+      } catch { /* arquivo pode não existir antes da totalização exigida */ }
+    }
+    els.electedGrid.innerHTML = all.join('');
+    els.electedNotice.textContent = all.length ? `${all.length} registro(s) lido(s) dos arquivos nacionais EA10.` : 'Os arquivos nacionais EA10 ainda não retornaram registros disponíveis para esta consulta.';
+  } finally { els.loadNationalElectedButton.disabled = false; }
+}
+
+function activateTab(name) {
+  activeTab = name;
+  document.querySelectorAll('.tab-button').forEach(btn => {
+    const active = btn.dataset.tab === name;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-selected', String(active));
+  });
+  document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.toggle('active', panel.id === `tab-${name}`));
+  if (name === 'evolucao') requestAnimationFrame(renderHistory);
+}
+
+function configureTheme() {
+  const saved = localStorage.getItem('eleicoes2026.theme');
+  if (saved) document.documentElement.dataset.theme = saved;
+  els.themeToggle.addEventListener('click', () => {
+    const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem('eleicoes2026.theme', next);
+    if (activeTab === 'evolucao') requestAnimationFrame(renderHistory);
+  });
+}
+
+function bindEvents() {
+  els.turno.addEventListener('change', () => { resetMunicipalRanking(); comparisonData = []; if (els.abrangencia.value === 'municipio') refreshMunicipalities(); load({ manual:true }); });
+  els.cargo.addEventListener('change', () => { resetMunicipalRanking(); comparisonData = []; currentMunicipalities = []; currentMunicipalitiesUf = ''; syncControlRules(); load({ manual:true }); });
+  els.abrangencia.addEventListener('change', () => { syncControlRules(); if (els.abrangencia.value !== 'municipio') load({ manual:true }); });
+  els.uf.addEventListener('change', () => {
+    resetMunicipalRanking(); currentMunicipalities = []; currentMunicipalitiesUf = ''; selectedMapUf = els.uf.value;
+    localStorage.setItem('eleicoes2026.uf', els.uf.value);
+    if (els.abrangencia.value === 'municipio') refreshMunicipalities(); else load({ manual:true });
+    updateScopeLabel();
+  });
+  els.municipio.addEventListener('change', () => {
+    if (els.municipio.value) localStorage.setItem(`eleicoes2026.municipio.${els.uf.value}`, els.municipio.value);
+    updateScopeLabel(); load({ manual:true });
+  });
+  els.refresh.addEventListener('click', () => load({ manual:true }));
+  els.search.addEventListener('input', () => currentResult && renderCandidates(currentResult.candidates));
+  document.querySelectorAll('.tab-button').forEach(btn => btn.addEventListener('click', () => activateTab(btn.dataset.tab)));
+  els.compareStatesButton.addEventListener('click', loadStateComparison);
+  els.showStatesMapButton.addEventListener('click', showStatesMap);
+  els.showMunicipalMapButton.addEventListener('click', showMunicipalMap);
+  els.loadNationalButton.addEventListener('click', loadNationalPanel);
+  els.loadStateRankingButton.addEventListener('click', loadStateRanking);
+  els.loadMunicipalBatchButton.addEventListener('click', () => loadMunicipalRankingBatch());
+  els.loadAllMunicipalButton.addEventListener('click', () => loadMunicipalRankingBatch({ all:true }));
+  els.stopMunicipalButton.addEventListener('click', () => municipalRankingController?.abort());
+  els.rankingCandidate.addEventListener('change', () => resetMunicipalRanking());
+  els.stateSearchInput.addEventListener('input', renderStateComparison);
+  els.openStateButton.addEventListener('click', openSelectedState);
+  els.loadElectedButton.addEventListener('click', loadAllElectedForState);
+  els.loadNationalElectedButton.addEventListener('click', loadNationalElected);
+  els.clearHistoryButton.addEventListener('click', () => {
+    if (!activeQueryKey) return;
+    clearHistory(activeQueryKey); currentHistory = []; renderHistory();
+  });
+  window.addEventListener('resize', () => { if (activeTab === 'evolucao') requestAnimationFrame(renderHistory); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) clearTimeout(timer); else load();
+  });
+}
+
+async function init() {
+  populateStates();
+  configureTheme();
+  const mapResult = await renderBrazilMap(els.brazilMap, STATES, selectMapState);
+  els.mapModeStatus.textContent = mapResult.mode === 'geographic' ? 'Mapa: limites estaduais geográficos (fonte IBGE via dataset CC0)' : 'Mapa: modo de contingência simplificado';
+  bindEvents();
+  syncControlRules({ loadMunicipalities:false });
+  els.dataSourceBadge.textContent = DEMO ? 'Dados simulados' : isWorkerEnabled() ? 'Cloudflare Worker' : 'Fonte direta';
+  els.liveLabel.textContent = DEMO ? 'Ambiente de demonstração' : 'Acompanhamento em tempo real';
+  // Standalone build: service worker disabled for single-file deployment.
+  await load({ manual:true });
+}
+
+init();
+
+</script>
+</body>
+</html>
