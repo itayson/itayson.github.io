@@ -1,0 +1,395 @@
+tions.percent,
+          validVotes:result.votes.valid, generatedAt:result.generatedAt, available:true,
+        };
+      } catch (error) {
+        if (error.name === 'AbortError') throw error;
+        rows[index] = { code:municipality.code, ibge:municipality.ibge || '', name:municipality.name, capital:Boolean(municipality.capital), available:false, error:error.code || 'FETCH_ERROR', votes:0, percent:0, sectionsPct:0 };
+      } finally { done += 1; onProgress?.(done, slice.length); }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, Math.max(1, slice.length)) }, runner));
+  return { rows:rows.filter(Boolean), next:start + slice.length, total:list.length, municipalities:list };
+}
+
+function isWorkerEnabled() { return Boolean(workerBase); }
+
+
+/* === history.js === */
+const PREFIX = 'eleicoes2026.history.';
+const MAX_SNAPSHOTS = 240;
+
+function storageKey(key) { return `${PREFIX}${key}`; }
+
+function snapshotFromResult(result) {
+  return {
+    at: Date.now(),
+    generatedAt: result.generatedAt,
+    rawId: result.rawId || '',
+    sectionsPct: result.sections.percent,
+    validVotes: result.votes.valid,
+    candidates: result.candidates.slice(0, 8).map(c => ({ id: `${c.number}:${c.party}`, name: c.name, party: c.party, percent: c.percent, votes: c.votes })),
+  };
+}
+
+function readHistory(key) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(storageKey(key)) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function appendHistory(key, result) {
+  const list = readHistory(key);
+  const next = snapshotFromResult(result);
+  const last = list.at(-1);
+  const same = last && (
+    (next.rawId && last.rawId === next.rawId) ||
+    (!next.rawId && last.generatedAt === next.generatedAt && last.sectionsPct === next.sectionsPct)
+  );
+  if (same) return list;
+  list.push(next);
+  const trimmed = list.slice(-MAX_SNAPSHOTS);
+  localStorage.setItem(storageKey(key), JSON.stringify(trimmed));
+  return trimmed;
+}
+
+function mergeHistories(local, remote) {
+  const map = new Map();
+  [...remote, ...local].forEach(item => {
+    const id = item.rawId || `${item.generatedAt}:${item.sectionsPct}:${item.validVotes}`;
+    map.set(id, item);
+  });
+  return [...map.values()].sort((a, b) => (a.at || 0) - (b.at || 0)).slice(-MAX_SNAPSHOTS);
+}
+
+function clearHistory(key) { localStorage.removeItem(storageKey(key)); }
+
+
+/* === charts.js === */
+const PALETTE = ['#52d3a2', '#66a8ff', '#f8c05d', '#c996ff', '#ff8f91', '#9dd86c'];
+
+function prepareCanvas(canvas) {
+  const rect = canvas.getBoundingClientRect();
+  const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  const width = Math.max(320, Math.floor(rect.width));
+  const height = Number(canvas.getAttribute('height')) || 320;
+  canvas.width = Math.floor(width * dpr);
+  canvas.height = Math.floor(height * dpr);
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, width, height };
+}
+
+function css(name, fallback) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+}
+
+function drawAxes(ctx, width, height, { min = 0, max = 100, ticks = 5 } = {}) {
+  const left = 52, right = 18, top = 18, bottom = 34;
+  const plotW = width - left - right;
+  const plotH = height - top - bottom;
+  ctx.clearRect(0, 0, width, height);
+  ctx.font = '12px system-ui, sans-serif';
+  ctx.fillStyle = css('--muted', '#8fa29c');
+  ctx.strokeStyle = css('--line', '#253630');
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= ticks; i++) {
+    const value = min + (max - min) * (i / ticks);
+    const y = top + plotH - (plotH * i / ticks);
+    ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(width - right, y); ctx.stroke();
+    ctx.fillText(`${value.toFixed(max <= 10 ? 1 : 0)}%`, 4, y + 4);
+  }
+  return { left, right, top, bottom, plotW, plotH, min, max };
+}
+
+function xAt(index, count, axes) {
+  if (count <= 1) return axes.left + axes.plotW / 2;
+  return axes.left + (index / (count - 1)) * axes.plotW;
+}
+function yAt(value, axes) {
+  const t = (value - axes.min) / Math.max(0.0001, axes.max - axes.min);
+  return axes.top + axes.plotH - t * axes.plotH;
+}
+
+function drawTimeLabels(ctx, points, axes, width) {
+  const indices = points.length <= 4 ? points.map((_, i) => i) : [0, Math.floor((points.length - 1) / 2), points.length - 1];
+  ctx.fillStyle = css('--muted', '#8fa29c');
+  ctx.font = '11px system-ui, sans-serif';
+  indices.forEach((idx, pos) => {
+    const p = points[idx];
+    const label = p.generatedAt ? p.generatedAt.split(' ').at(-1) : new Date(p.at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const x = xAt(idx, points.length, axes);
+    ctx.textAlign = pos === 0 ? 'left' : pos === indices.length - 1 ? 'right' : 'center';
+    ctx.fillText(label, Math.max(axes.left, Math.min(width - axes.right, x)), axes.top + axes.plotH + 22);
+  });
+  ctx.textAlign = 'start';
+}
+
+function drawSectionsChart(canvas, history) {
+  const { ctx, width, height } = prepareCanvas(canvas);
+  const axes = drawAxes(ctx, width, height, { min: 0, max: 100, ticks: 5 });
+  if (history.length < 2) return false;
+  ctx.strokeStyle = css('--accent', '#52d3a2');
+  ctx.lineWidth = 3;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  history.forEach((p, i) => {
+    const x = xAt(i, history.length, axes), y = yAt(Number(p.sectionsPct || 0), axes);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  drawTimeLabels(ctx, history, axes, width);
+  return true;
+}
+
+function drawCandidatesChart(canvas, history, legendElement) {
+  const { ctx, width, height } = prepareCanvas(canvas);
+  if (history.length < 2) {
+    drawAxes(ctx, width, height, { min: 0, max: 100, ticks: 5 });
+    legendElement.innerHTML = '';
+    return false;
+  }
+  const latest = history.at(-1);
+  const top = (latest.candidates || []).slice(0, 5);
+  const maxPct = Math.max(10, ...top.map(c => Number(c.percent || 0)));
+  const chartMax = Math.min(100, Math.ceil(maxPct / 10) * 10 + 10);
+  const axes = drawAxes(ctx, width, height, { min: 0, max: chartMax, ticks: 5 });
+
+  legendElement.innerHTML = top.map((c, i) => `<span><i style="background:${PALETTE[i % PALETTE.length]}"></i>${escapeHtml(c.name)} · ${escapeHtml(c.party)}</span>`).join('');
+
+  top.forEach((candidate, ci) => {
+    const id = candidate.id;
+    ctx.strokeStyle = PALETTE[ci % PALETTE.length];
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    let started = false;
+    history.forEach((snap, i) => {
+      const found = (snap.candidates || []).find(c => c.id === id);
+      if (!found) return;
+      const x = xAt(i, history.length, axes), y = yAt(Number(found.percent || 0), axes);
+      if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  });
+  drawTimeLabels(ctx, history, axes, width);
+  return true;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>'"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[ch]));
+}
+
+
+/* === map.js === */
+const STATE_GEOJSON_URL = 'https://cdn.jsdelivr.net/gh/henriquemalvar/br-geojson@main/dist/estados.geojson';
+const MUNICIPAL_GEOJSON_URL = uf => `https://cdn.jsdelivr.net/gh/henriquemalvar/br-geojson@main/dist/municipios/${uf.toUpperCase()}.geojson`;
+
+const FALLBACK_LAYOUT = {
+  RR:[2.1,0.4], AP:[5.8,0.5], AM:[1.6,1.6], PA:[4.4,1.7], MA:[6.4,2.0], CE:[8.0,2.2], RN:[9.5,2.1],
+  AC:[0.2,2.7], RO:[1.8,3.0], TO:[5.2,3.0], PI:[6.7,3.0], PB:[9.3,3.0], MT:[3.1,4.1], GO:[5.2,4.25],
+  BA:[7.1,4.2], PE:[9.1,3.85], AL:[9.6,4.55], SE:[9.1,5.0], MS:[3.5,5.5], MG:[6.2,5.5], ES:[8.0,5.8],
+  SP:[5.4,6.7], RJ:[7.3,6.75], PR:[4.9,7.75], SC:[5.1,8.65], RS:[4.6,9.7], DF:[5.25,4.65],
+};
+
+const geoCache = new Map();
+const ns = 'http://www.w3.org/2000/svg';
+
+async function fetchGeoJson(url) {
+  if (geoCache.has(url)) return geoCache.get(url);
+  const promise = fetch(url, { cache: 'force-cache', headers: { Accept: 'application/geo+json,application/json' } })
+    .then(r => {
+      if (!r.ok) throw new Error(`GeoJSON respondeu ${r.status}`);
+      return r.json();
+    });
+  geoCache.set(url, promise);
+  try { return await promise; }
+  catch (error) { geoCache.delete(url); throw error; }
+}
+
+function walkCoords(geometry, visitor) {
+  if (!geometry?.coordinates) return;
+  const visit = coords => {
+    if (typeof coords?.[0] === 'number' && typeof coords?.[1] === 'number') visitor(coords[0], coords[1]);
+    else if (Array.isArray(coords)) coords.forEach(visit);
+  };
+  visit(geometry.coordinates);
+}
+
+function bboxOf(features) {
+  let minLon = Infinity, minLat = Infinity, maxLon = -Infinity, maxLat = -Infinity;
+  features.forEach(feature => walkCoords(feature.geometry, (lon, lat) => {
+    minLon = Math.min(minLon, lon); maxLon = Math.max(maxLon, lon);
+    minLat = Math.min(minLat, lat); maxLat = Math.max(maxLat, lat);
+  }));
+  if (!Number.isFinite(minLon)) return [-74, -34, -34, 6];
+  return [minLon, minLat, maxLon, maxLat];
+}
+
+function projector(bbox, width = 760, height = 700, padding = 24) {
+  const [minLon, minLat, maxLon, maxLat] = bbox;
+  const dx = Math.max(0.0001, maxLon - minLon);
+  const dy = Math.max(0.0001, maxLat - minLat);
+  const usableW = width - padding * 2;
+  const usableH = height - padding * 2;
+  const sx = usableW / dx;
+  const sy = usableH / dy;
+  const scale = Math.min(sx, sy);
+  const drawW = dx * scale;
+  const drawH = dy * scale;
+  const ox = (width - drawW) / 2;
+  const oy = (height - drawH) / 2;
+  return (lon, lat) => [ox + (lon - minLon) * scale, oy + (maxLat - lat) * scale];
+}
+
+function ringPath(ring, project) {
+  return ring.map((coord, index) => {
+    const [x, y] = project(coord[0], coord[1]);
+    return `${index ? 'L' : 'M'}${x.toFixed(2)},${y.toFixed(2)}`;
+  }).join(' ') + ' Z';
+}
+
+function geometryPath(geometry, project) {
+  if (!geometry) return '';
+  if (geometry.type === 'Polygon') return geometry.coordinates.map(r => ringPath(r, project)).join(' ');
+  if (geometry.type === 'MultiPolygon') return geometry.coordinates.flatMap(p => p.map(r => ringPath(r, project))).join(' ');
+  return '';
+}
+
+function attachInteractive(group, label, callback, value) {
+  group.setAttribute('tabindex', '0');
+  group.setAttribute('role', 'button');
+  group.setAttribute('aria-label', label);
+  group.addEventListener('click', () => callback(value));
+  group.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); callback(value); }
+  });
+}
+
+function fallbackBrazilMap(svg, states, onSelect) {
+  const width = 62, height = 48, sx = 68, sy = 61, ox = 28, oy = 20;
+  svg.innerHTML = '';
+  svg.dataset.mapMode = 'fallback';
+  svg.setAttribute('viewBox', '0 0 760 700');
+  states.forEach(([uf, name]) => {
+    const [gx, gy] = FALLBACK_LAYOUT[uf];
+    const g = document.createElementNS(ns, 'g');
+    g.classList.add('map-state');
+    g.dataset.uf = uf;
+    attachInteractive(g, `${name} (${uf})`, onSelect, uf);
+    const rect = document.createElementNS(ns, 'rect');
+    rect.setAttribute('x', String(ox + gx * sx)); rect.setAttribute('y', String(oy + gy * sy));
+    rect.setAttribute('rx', uf === 'DF' ? '10' : '16');
+    rect.setAttribute('width', String(uf === 'DF' ? 44 : width)); rect.setAttribute('height', String(uf === 'DF' ? 36 : height));
+    const text = document.createElementNS(ns, 'text');
+    text.setAttribute('x', String(ox + gx * sx + (uf === 'DF' ? 22 : width / 2)));
+    text.setAttribute('y', String(oy + gy * sy + (uf === 'DF' ? 23 : 30)));
+    text.setAttribute('text-anchor', 'middle'); text.textContent = uf;
+    const title = document.createElementNS(ns, 'title'); title.textContent = name;
+    g.append(rect, text, title); svg.append(g);
+  });
+}
+
+async function renderBrazilMap(svg, states, onSelect) {
+  svg.innerHTML = '<text x="380" y="350" text-anchor="middle" class="map-loading-text">Carregando mapa geográfico…</text>';
+  try {
+    const geo = await fetchGeoJson(STATE_GEOJSON_URL);
+    const features = Array.isArray(geo.features) ? geo.features : [];
+    if (!features.length) throw new Error('GeoJSON sem estados.');
+    svg.innerHTML = '';
+    svg.dataset.mapMode = 'geographic';
+    svg.setAttribute('viewBox', '0 0 760 700');
+    const project = projector(bboxOf(features));
+    const known = new Map(states);
+    features.forEach(feature => {
+      const uf = String(feature.properties?.sigla || feature.id || '').toUpperCase();
+      if (!known.has(uf)) return;
+      const name = feature.properties?.nome || known.get(uf) || uf;
+      const g = document.createElementNS(ns, 'g');
+      g.classList.add('map-state', 'geo-state'); g.dataset.uf = uf;
+      attachInteractive(g, `${name} (${uf})`, onSelect, uf);
+      const path = document.createElementNS(ns, 'path');
+      path.setAttribute('d', geometryPath(feature.geometry, project));
+      const title = document.createElementNS(ns, 'title'); title.textContent = name;
+      g.append(path, title); svg.append(g);
+    });
+    return { mode:'geographic', source:STATE_GEOJSON_URL };
+  } catch (error) {
+    fallbackBrazilMap(svg, states, onSelect);
+    return { mode:'fallback', error };
+  }
+}
+
+function updateBrazilMap(svg, summaries, selectedUf) {
+  const map = new Map((summaries || []).map(x => [x.uf, x]));
+  svg.querySelectorAll('.map-state').forEach(g => {
+    const uf = g.dataset.uf;
+    const summary = map.get(uf);
+    g.classList.toggle('selected', uf === selectedUf);
+    const pct = Number(summary?.sectionsPct || 0);
+    const level = pct >= 95 ? 'v5' : pct >= 75 ? 'v4' : pct >= 50 ? 'v3' : pct >= 25 ? 'v2' : pct > 0 ? 'v1' : 'v0';
+    g.dataset.level = level;
+    const title = g.querySelector('title');
+    if (title && summary) {
+      const top = summary.top?.[0];
+      title.textContent = `${summary.state || uf} · ${pct.toFixed(2)}% das seções${top ? ` · ${top.name}: ${Number(top.percent || 0).toFixed(2)}%` : ''}`;
+    }
+  });
+}
+
+async function renderMunicipalityMap(svg, uf, { selectedIbge = '', ranking = [], onSelect } = {}) {
+  const url = MUNICIPAL_GEOJSON_URL(uf);
+  svg.innerHTML = '<text x="380" y="350" text-anchor="middle" class="map-loading-text">Carregando limites municipais…</text>';
+  const geo = await fetchGeoJson(url);
+  const features = Array.isArray(geo.features) ? geo.features : [];
+  if (!features.length) throw new Error('GeoJSON municipal indisponível.');
+  const project = projector(bboxOf(features));
+  const byIbge = new Map((ranking || []).map(item => [String(item.ibge || ''), item]));
+  svg.innerHTML = '';
+  svg.dataset.mapMode = 'municipal';
+  svg.setAttribute('viewBox', '0 0 760 700');
+  features.forEach(feature => {
+    const ibge = String(feature.properties?.cd_geocmu || feature.id || '');
+    const name = feature.properties?.nome || ibge;
+    const item = byIbge.get(ibge);
+    const g = document.createElementNS(ns, 'g');
+    g.classList.add('map-municipality');
+    g.dataset.ibge = ibge;
+    g.classList.toggle('selected', Boolean(selectedIbge) && ibge === String(selectedIbge));
+    if (item) {
+      const p = Number(item.percent || 0);
+      g.dataset.level = p >= 60 ? 'v5' : p >= 50 ? 'v4' : p >= 40 ? 'v3' : p >= 30 ? 'v2' : p > 0 ? 'v1' : 'v0';
+    }
+    attachInteractive(g, `${name}${item ? ` · ${Number(item.percent || 0).toFixed(2)}%` : ''}`, onSelect || (() => {}), { ibge, name });
+    const path = document.createElementNS(ns, 'path'); path.setAttribute('d', geometryPath(feature.geometry, project));
+    const title = document.createElementNS(ns, 'title');
+    title.textContent = item ? `${name} · ${Number(item.percent || 0).toFixed(2)}% · ${Number(item.votes || 0).toLocaleString('pt-BR')} votos` : name;
+    g.append(path, title); svg.append(g);
+  });
+  return { mode:'municipal', source:url, features };
+}
+
+
+/* === app.js === */
+const $ = id => document.getElementById(id);
+const els = {
+  turno: $('turno'), cargo: $('cargo'), abrangencia: $('abrangencia'), uf: $('uf'), ufField: $('ufField'),
+  municipio: $('municipio'), municipioField: $('municipioField'), refresh: $('refreshButton'), updatedAt: $('updatedAt'),
+  connectionBadge: $('connectionBadge'), dataSourceBadge: $('dataSourceBadge'), notice: $('notice'), search: $('searchInput'),
+  candidateList: $('candidateList'), template: $('candidateTemplate'), loading: $('loadingState'), empty: $('emptyState'),
+  pctSecoes: $('pctSecoes'), pctSecoesBar: $('pctSecoesBar'), secoesDetail: $('secoesDetail'), eleitorado: $('eleitorado'),
+  comparecimento: $('comparecimento'), votosValidos: $('votosValidos'), votosTotais: $('votosTotais'), brancosNulos: $('brancosNulos'),
+  brancosNulosPct: $('brancosNulosPct'), scopeLabel: $('scopeLabel'), themeToggle: $('themeToggle'), liveLabel: $('liveLabel'),
+  resultTitle: $('resultTitle'), resultSubtitle: $('resultSubtitle'), brazilMap: $('brazilMap'), compareStatesButton: $('compareStatesButton'),
+  mapStateName: $('mapStateName'), mapStateMeta: $('mapStateMeta'), mapStateCandidates: $('mapStateCandidates'), openStateButton: $('openStateButton'),
+  stateCompareStatus: $('stateCompareStatus'), stateComparison: $('stateComparison'), stateSearchInput: $('stateSearchInput'),
+  sectionsChart: $('sectionsChart'), candidatesChart: $('candidatesChart'), sectionsChartEmpty: $('sectionsChartEmpty'),
+  candidatesChartEmpty: $('candidatesChartEmpty'), candidateChartLegend: $('candidateChartLegend'), clearHistoryButton: $('clearHistoryButton'),
+  electedGrid: $('electedGrid'), electedNotice: $('electedNotice'), loadElectedButton: $('loadElectedButton'),
+  loadNationalElectedButton: $('loadNationalElectedButton'), showStatesMapButton: $('showStatesMapButton'),
+  showMunicipalMapButton: $('showMunicipalMapButton'), mapModeStatus: $('mapModeStatus'),
+  loadNationalButton: $('loadNationalButton'), nationalStatus: $('nationalStatus'), nationalPresident: $('nationalPresident'),
+  nationalGovernors: $('nationalGovernors'), nationalSenate: $('nationalSenate'),
+  rankingCandidate: $('rankingCandidate'), loadStateRankingButton: $('loadStateRankingButton'), stateRankin
