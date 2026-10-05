@@ -1,0 +1,371 @@
+gStatus: $('stateRankingStatus'),
+  stateRanking: $('stateRanking'), loadMunicipalBatchButton: $('loadMunicipalBatchButton'), loadAllMunicipalButton: $('loadAllMunicipalButton'),
+  stopMunicipalButton: $('stopMunicipalButton'), municipalRankingStatus: $('municipalRankingStatus'), municipalRanking: $('municipalRanking'),
+};
+
+const DEMO = new URLSearchParams(location.search).get('demo') === '1' || location.hash === '#demo';
+const POLL_MS = Number(window.ELEICOES_APP_CONFIG?.pollMs || 30000);
+let currentResult = null;
+let activeQueryKey = '';
+let timer = null;
+let controller = null;
+let municipalityController = null;
+let comparisonController = null;
+let comparisonData = [];
+let selectedMapUf = '';
+let currentHistory = [];
+let activeTab = 'apurar';
+let currentMunicipalities = [];
+let currentMunicipalitiesUf = '';
+let municipalRankingRows = [];
+let municipalRankingCursor = 0;
+let municipalRankingController = null;
+let mapView = 'states';
+let lastRankingQueryKey = '';
+
+const DEMO_NAMES = [
+  ['Candidata Aurora','PDA','10'], ['Candidato Horizonte','PDB','20'], ['Candidata Verde','PDC','30'], ['Candidato Sul','PDD','40'],
+];
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>'"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[ch]));
+}
+
+function populateStates() {
+  els.uf.innerHTML = STATES.map(([code, name]) => `<option value="${code}">${code} — ${name}</option>`).join('');
+  els.uf.value = localStorage.getItem('eleicoes2026.uf') || 'RN';
+}
+
+function paramsFromControls() {
+  const office = Number(els.cargo.value);
+  const scope = els.abrangencia.value;
+  const uf = scope === 'br' ? 'BR' : els.uf.value;
+  const municipality = scope === 'municipio' ? els.municipio.value : '';
+  return { turn: Number(els.turno.value), office, scope, uf, municipality };
+}
+
+function syncControlRules({ loadMunicipalities = true } = {}) {
+  const office = Number(els.cargo.value);
+  const cfg = OFFICES[office];
+  const scope = els.abrangencia.value;
+  const secondTurnOption = els.turno.querySelector('option[value="2"]');
+  secondTurnOption.disabled = !cfg.secondRound;
+  if (!cfg.secondRound && els.turno.value === '2') els.turno.value = '1';
+  const brOption = els.abrangencia.querySelector('option[value="br"]');
+  brOption.disabled = office !== 1;
+  if (office !== 1 && scope === 'br') els.abrangencia.value = 'uf';
+  if (cfg.only) {
+    els.uf.value = cfg.only;
+    els.uf.disabled = true;
+  } else {
+    els.uf.disabled = false;
+  }
+  const actualScope = els.abrangencia.value;
+  els.ufField.classList.toggle('hidden', actualScope === 'br');
+  els.municipioField.classList.toggle('hidden', actualScope !== 'municipio');
+  if (actualScope === 'municipio' && loadMunicipalities) refreshMunicipalities();
+  updateScopeLabel();
+}
+
+function updateScopeLabel() {
+  const p = paramsFromControls();
+  let scopeText = 'Brasil';
+  if (p.scope === 'uf') scopeText = `${stateName(p.uf)} (${p.uf})`;
+  if (p.scope === 'municipio') {
+    const option = els.municipio.selectedOptions[0];
+    scopeText = option?.value ? `${option.textContent} · ${p.uf}` : `${stateName(p.uf)} (${p.uf})`;
+  }
+  els.scopeLabel.textContent = `${scopeText} · ${officeName(p.office)}`;
+}
+
+async function refreshMunicipalities() {
+  municipalityController?.abort();
+  municipalityController = new AbortController();
+  const { office, turn, uf } = paramsFromControls();
+  els.municipio.disabled = true;
+  els.municipio.innerHTML = '<option value="">Carregando municípios…</option>';
+  try {
+    let list;
+    if (DEMO) {
+      list = [{ code:'16935', ibge:'2412203', name:'São José de Mipibu' }, { code:'17612', ibge:'2408102', name:'Natal' }, { code:'17515', ibge:'2403251', name:'Parnamirim' }];
+    } else {
+      list = await fetchMunicipalities({ office, turn, uf }, { signal: municipalityController.signal });
+    }
+    if (!list.length) throw new Error('Lista de municípios não disponível.');
+    currentMunicipalities = list;
+    currentMunicipalitiesUf = uf;
+    els.municipio.innerHTML = list.map(m => `<option value="${escapeHtml(m.code)}" data-ibge="${escapeHtml(m.ibge || '')}">${escapeHtml(m.name)}${m.capital ? ' ★' : ''}</option>`).join('');
+    const saved = localStorage.getItem(`eleicoes2026.municipio.${uf}`);
+    if (saved && list.some(m => m.code === saved)) els.municipio.value = saved;
+    els.municipio.disabled = false;
+    updateScopeLabel();
+  } catch (error) {
+    if (error.name === 'AbortError') return;
+    els.municipio.innerHTML = '<option value="">Municípios indisponíveis</option>';
+    showNotice('Não foi possível carregar a lista de municípios para esta eleição. Tente novamente em alguns instantes.');
+  }
+}
+
+function setBusy(busy) {
+  els.refresh.disabled = busy;
+  els.loading.classList.toggle('hidden', !busy || Boolean(currentResult));
+}
+function setConnection(kind, text) {
+  els.connectionBadge.className = `status-badge ${kind}`;
+  els.connectionBadge.textContent = text;
+}
+function showNotice(message, type = 'warning') {
+  els.notice.textContent = message;
+  els.notice.classList.remove('hidden');
+  els.notice.dataset.type = type;
+}
+function hideNotice() { els.notice.classList.add('hidden'); }
+
+function demoResult(params) {
+  const baseVotes = params.office === 1 ? [40124567, 35677801, 18226491, 7412300] : [1335200, 1188340, 672190, 114230];
+  const scale = params.scope === 'br' ? 1 : params.scope === 'uf' ? 0.08 : 0.0015;
+  const votes = baseVotes.map(v => Math.max(1, Math.round(v * scale)));
+  const total = votes.reduce((a,b) => a+b, 0);
+  const candidates = DEMO_NAMES.map((n, i) => ({
+    sqcand: `demo-${i}`, number: n[2], name: n[0], fullName: n[0], party: n[1], coalition: '', votes: votes[i],
+    percent: votes[i] / total * 100, elected: false, status: 'DADO FICTÍCIO',
+    vices: params.office === 1 ? [{ name:`Vice ${i+1}`, party:n[1], type:'v' }] : [], photo: '',
+  }));
+  const pctSections = Math.min(100, 38 + (Date.now() / 5000 % 58));
+  return {
+    office: params.office, officeName: officeName(params.office), scopeCode: params.scope === 'br' ? 'br' : params.uf.toLowerCase(), seats: params.office === 5 ? 2 : 1,
+    generatedAt: new Date().toLocaleString('pt-BR'), final: false, rawId: `demo-${Math.floor(Date.now()/5000)}`,
+    sections: { total:472000, counted:Math.round(472000*pctSections/100), percent:pctSections },
+    electorate: { total:158765543, turnout:103148282, turnoutPct:64.97, abstention:55617261, abstentionPct:35.03 },
+    votes: { total:103148282, valid:total, blank:2145000, blankPct:2.08, null:3357000, nullPct:3.25 }, candidates,
+  };
+}
+
+async function load({ manual = false } = {}) {
+  clearTimeout(timer);
+  controller?.abort();
+  controller = new AbortController();
+  const params = paramsFromControls();
+  if (params.scope === 'municipio' && !params.municipality) {
+    showNotice('Selecione um município antes de consultar.');
+    return;
+  }
+  const key = queryKey(params);
+  activeQueryKey = key;
+  updateScopeLabel();
+  if (manual || !currentResult) setBusy(true);
+  hideNotice();
+
+  try {
+    const result = DEMO ? demoResult(params) : await fetchResult(params, { signal: controller.signal });
+    if (key !== activeQueryKey) return;
+    currentResult = result;
+    renderResult(result, params);
+    currentHistory = appendHistory(key, result);
+    if (!DEMO && isWorkerEnabled()) {
+      const remote = await fetchRemoteHistory(key, { signal: controller.signal });
+      currentHistory = mergeHistories(currentHistory, remote);
+    }
+    renderHistory();
+    setConnection('ok', DEMO ? 'Modo demonstração' : result.final ? 'Totalização final' : 'Dados atualizados');
+    if (DEMO) showNotice('MODO DEMONSTRAÇÃO: nomes, partidos, números e votos são fictícios e servem apenas para testar a interface.', 'warning');
+  } catch (error) {
+    if (error.name === 'AbortError') return;
+    console.error(error);
+    setConnection('error', 'Falha na atualização');
+    showNotice(`${error.message || 'Não foi possível consultar a fonte.'} Os dados exibidos, se houver, permanecem da última atualização bem-sucedida.`);
+    if (!currentResult) {
+      els.candidateList.innerHTML = '';
+      els.empty.classList.remove('hidden');
+    }
+  } finally {
+    setBusy(false);
+    timer = setTimeout(() => load(), POLL_MS);
+  }
+}
+
+function renderResult(result, params) {
+  els.empty.classList.toggle('hidden', result.candidates.length > 0);
+  els.updatedAt.textContent = result.generatedAt || '—';
+  els.pctSecoes.textContent = fmtPct(result.sections.percent);
+  els.pctSecoesBar.style.width = `${Math.max(0, Math.min(100, result.sections.percent))}%`;
+  els.secoesDetail.textContent = `${fmtInt(result.sections.counted)} de ${fmtInt(result.sections.total)} seções`;
+  els.eleitorado.textContent = fmtInt(result.electorate.total);
+  els.comparecimento.textContent = `Comparecimento: ${fmtInt(result.electorate.turnout)} · ${fmtPct(result.electorate.turnoutPct)}`;
+  els.votosValidos.textContent = fmtInt(result.votes.valid);
+  els.votosTotais.textContent = `Total computado: ${fmtInt(result.votes.total)}`;
+  const invalid = result.votes.blank + result.votes.null;
+  els.brancosNulos.textContent = fmtInt(invalid);
+  const invalidPct = result.votes.total ? invalid / result.votes.total * 100 : result.votes.blankPct + result.votes.nullPct;
+  els.brancosNulosPct.textContent = `${fmtPct(invalidPct)} dos votos computados`;
+  els.resultTitle.textContent = result.officeName || officeName(result.office);
+  els.resultSubtitle.textContent = result.final
+    ? 'Totalização marcada como final pelo arquivo consultado.'
+    : 'Ordenados pelos votos válidos informados no arquivo mais recente.';
+  renderCandidates(result.candidates);
+  renderCurrentElected(result);
+  syncRankingCandidateOptions(result);
+  updateScopeLabel();
+}
+
+function renderCandidates(candidates) {
+  const term = els.search.value.trim().toLocaleLowerCase('pt-BR');
+  const filtered = candidates.filter(c => !term || [c.name, c.fullName, c.party, c.number].some(v => String(v).toLocaleLowerCase('pt-BR').includes(term)));
+  els.candidateList.innerHTML = '';
+  filtered.forEach(candidate => {
+    const node = els.template.content.firstElementChild.cloneNode(true);
+    const img = node.querySelector('.candidate-photo');
+    const placeholder = node.querySelector('.candidate-placeholder');
+    if (candidate.photo) {
+      img.src = candidate.photo;
+      img.alt = `Foto de ${candidate.name}`;
+      img.addEventListener('error', () => { img.remove(); placeholder.textContent = candidate.number || '—'; });
+    } else {
+      img.remove(); placeholder.textContent = candidate.number || '—';
+    }
+    node.querySelector('.candidate-number').textContent = candidate.number ? `Nº ${candidate.number}` : 'Sem número';
+    node.querySelector('.candidate-party').textContent = candidate.party || '—';
+    node.querySelector('.candidate-name').textContent = candidate.name;
+    const vice = candidate.vices?.find(v => v.type === 'v') || candidate.vices?.[0];
+    node.querySelector('.candidate-vice').textContent = vice ? `Vice: ${vice.name}${vice.party ? ` · ${vice.party}` : ''}` : '';
+    node.querySelector('.candidate-score strong').textContent = fmtPct(candidate.percent);
+    node.querySelector('.candidate-score span').textContent = `${fmtInt(candidate.votes)} votos`;
+    node.querySelector('.candidate-progress .progress-bar').style.width = `${Math.max(0, Math.min(100, candidate.percent))}%`;
+    const status = node.querySelector('.candidate-status');
+    status.textContent = candidate.elected ? 'ELEITO' : candidate.runoff ? '2º TURNO' : candidate.status || (candidate.attributed ? 'SITUAÇÃO OFICIAL' : '');
+    status.dataset.elected = String(candidate.elected);
+    status.dataset.runoff = String(Boolean(candidate.runoff));
+    node.querySelector('.candidate-coalition').textContent = candidate.coalition || '';
+    els.candidateList.append(node);
+  });
+  els.empty.classList.toggle('hidden', filtered.length > 0);
+}
+
+function renderHistory() {
+  const hasSections = drawSectionsChart(els.sectionsChart, currentHistory);
+  const hasCandidates = drawCandidatesChart(els.candidatesChart, currentHistory, els.candidateChartLegend);
+  els.sectionsChartEmpty.classList.toggle('hidden', hasSections);
+  els.candidatesChartEmpty.classList.toggle('hidden', hasCandidates);
+}
+
+function renderCurrentElected(result) {
+  const elected = result.candidates.filter(c => c.elected);
+  if (!elected.length) {
+    els.electedGrid.innerHTML = '';
+    els.electedNotice.textContent = result.final
+      ? 'A totalização está marcada como final, mas esta consulta não possui candidatos com indicação de eleito.'
+      : 'Ainda não há candidatos marcados como eleitos nesta consulta.';
+    return;
+  }
+  els.electedNotice.textContent = `${elected.length} candidato(s) marcado(s) como eleito(s) na consulta atual.`;
+  els.electedGrid.innerHTML = elected.map(c => electedCardHtml(result.officeName, c)).join('');
+}
+
+function electedCardHtml(cargo, c, uf = '') {
+  return `<article class="elected-item">
+    <span class="elected-badge">ELEITO</span>
+    <small>${escapeHtml(cargo)}${uf ? ` · ${escapeHtml(uf)}` : ''}</small>
+    <strong>${escapeHtml(c.name)}</strong>
+    <span>${escapeHtml(c.party)} · Nº ${escapeHtml(c.number)} · ${fmtInt(c.votes)} votos</span>
+  </article>`;
+}
+
+async function loadAllElectedForState() {
+  const params = paramsFromControls();
+  if (params.scope === 'br') {
+    renderCurrentElected(currentResult || { candidates:[], officeName:'Presidente', final:false });
+    return;
+  }
+  const uf = params.uf;
+  els.loadElectedButton.disabled = true;
+  els.electedNotice.textContent = `Consultando cargos de ${stateName(uf)}…`;
+  els.electedGrid.innerHTML = '';
+  const offices = uf === 'DF' ? [3,5,6,8] : [3,5,6,7];
+  const cards = [];
+  try {
+    for (const office of offices) {
+      try {
+        const result = DEMO ? demoResult({ ...params, office, scope:'uf' }) : await fetchResult({ ...params, office, scope:'uf', municipality:'' });
+        result.candidates.filter(c => c.elected).forEach(c => cards.push(electedCardHtml(result.officeName, c, uf)));
+      } catch { /* arquivo individual pode ainda não estar disponível */ }
+    }
+    els.electedGrid.innerHTML = cards.join('');
+    els.electedNotice.textContent = cards.length
+      ? `${cards.length} registro(s) com indicação de eleito encontrado(s) em ${uf}.`
+      : `Ainda não há registros marcados como eleitos nos cargos consultados de ${uf}.`;
+  } finally {
+    els.loadElectedButton.disabled = false;
+  }
+}
+
+async function loadStateComparison() {
+  comparisonController?.abort();
+  comparisonController = new AbortController();
+  const { office, turn } = paramsFromControls();
+  els.compareStatesButton.disabled = true;
+  els.stateCompareStatus.textContent = 'Carregando panorama das UFs…';
+  comparisonData = [];
+  try {
+    if (DEMO) {
+      comparisonData = STATES.map(([uf, state], i) => ({
+        uf, state, sectionsPct: Math.min(100, 44 + i * 2.1), validVotes: 100000 + i*23111,
+        top: DEMO_NAMES.slice(0,3).map((n,j) => ({ name:n[0], party:n[1], number:n[2], votes:80000-j*15000+i*450, percent:48-j*13+(i%5)*0.3 })),
+      }));
+    } else {
+      comparisonData = await fetchStateComparison({ office, turn }, {
+        signal: comparisonController.signal,
+        onProgress: (done, total) => { els.stateCompareStatus.textContent = `Consultando UFs: ${done}/${total}…`; },
+      });
+    }
+    els.stateCompareStatus.textContent = `Panorama carregado para ${officeName(office)} · ${turn}º turno.`;
+    updateBrazilMap(els.brazilMap, comparisonData, selectedMapUf);
+    renderStateComparison();
+    if (selectedMapUf) renderMapInspector(selectedMapUf);
+  } catch (error) {
+    if (error.name !== 'AbortError') {
+      els.stateCompareStatus.textContent = `Falha ao carregar comparação: ${error.message || 'erro desconhecido'}`;
+    }
+  } finally {
+    els.compareStatesButton.disabled = false;
+  }
+}
+
+function renderStateComparison() {
+  const term = els.stateSearchInput.value.trim().toLocaleLowerCase('pt-BR');
+  const data = comparisonData.filter(item => {
+    if (!term) return true;
+    return [item.uf, item.state, ...(item.top || []).flatMap(c => [c.name, c.party])].some(v => String(v || '').toLocaleLowerCase('pt-BR').includes(term));
+  });
+  els.stateComparison.innerHTML = data.map(item => {
+    const top = item.top?.[0];
+    if (item.error) return `<button class="state-row error-row" data-uf="${item.uf}"><strong>${item.uf}</strong><span>Indisponível</span><span>—</span></button>`;
+    return `<button class="state-row" data-uf="${item.uf}">
+      <strong>${item.uf}</strong>
+      <span><b>${escapeHtml(top?.name || 'Sem candidato')}</b><small>${escapeHtml(top?.party || '')}${top ? ` · ${fmtPct(top.percent)}` : ''}</small></span>
+      <span class="state-progress-text">${fmtPct(item.sectionsPct)} seções</span>
+    </button>`;
+  }).join('');
+  els.stateComparison.querySelectorAll('[data-uf]').forEach(button => button.addEventListener('click', () => selectMapState(button.dataset.uf)));
+}
+
+function selectMapState(uf) {
+  selectedMapUf = uf;
+  updateBrazilMap(els.brazilMap, comparisonData, selectedMapUf);
+  renderMapInspector(uf);
+}
+
+function renderMapInspector(uf) {
+  const item = comparisonData.find(x => x.uf === uf);
+  els.mapStateName.textContent = `${stateName(uf)} (${uf})`;
+  if (!item || item.error) {
+    els.mapStateMeta.textContent = item?.error ? 'Resultado não disponível nesta carga.' : 'Carregue o panorama das 27 UFs para visualizar os dados deste estado.';
+    els.mapStateCandidates.innerHTML = '';
+  } else {
+    els.mapStateMeta.textContent = `${fmtPct(item.sectionsPct)} das seções totalizadas · ${fmtInt(item.validVotes)} votos válidos na consulta.`;
+    els.mapStateCandidates.innerHTML = (item.top || []).map((c, i) => `<div><span>${i+1}</span><p><strong>${escapeHtml(c.name)}</strong><small>${escapeHtml(c.party)} · ${fmtPct(c.percent)}</small></p></div>`).join('');
+  }
+  els.openStateButton.classList.remove('hidden');
+  els.openStateButton.dataset.uf = uf;
+}
+
+function open
