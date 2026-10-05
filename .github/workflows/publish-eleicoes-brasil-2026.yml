@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "eleicoes-brasil-2026-v3.0.0.zip.b64"
+      - "eleicoes-brasil-2026-v3.0.0.zip.b64.part.*"
 
 permissions:
   contents: write
@@ -20,7 +20,7 @@ jobs:
           set -euo pipefail
           rm -rf eleicoes-brasil-2026 /tmp/eleicoes-site /tmp/eleicoes.zip
           mkdir -p /tmp/eleicoes-site
-          base64 -d eleicoes-brasil-2026-v3.0.0.zip.b64 > /tmp/eleicoes.zip
+          cat eleicoes-brasil-2026-v3.0.0.zip.b64.part.* | base64 -d > /tmp/eleicoes.zip
           unzip -q /tmp/eleicoes.zip -d /tmp/eleicoes-site
           cp -a /tmp/eleicoes-site/eleicoes-brasil-2026 ./eleicoes-brasil-2026
       - name: Commit published source
