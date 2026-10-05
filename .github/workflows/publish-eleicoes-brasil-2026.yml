@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "eleicoes-brasil-2026-v3.0.0.zip.b64.part.*"
+      - "eleicoes-brasil-2026-standalone.part.*"
 
 permissions:
   contents: write
@@ -14,22 +14,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Extract release
+      - name: Assemble standalone site
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf eleicoes-brasil-2026 /tmp/eleicoes-site /tmp/eleicoes.zip
-          mkdir -p /tmp/eleicoes-site
-          cat eleicoes-brasil-2026-v3.0.0.zip.b64.part.* | base64 -d > /tmp/eleicoes.zip
-          unzip -q /tmp/eleicoes.zip -d /tmp/eleicoes-site
-          cp -a /tmp/eleicoes-site/eleicoes-brasil-2026 ./eleicoes-brasil-2026
-      - name: Commit published source
+          mkdir -p eleicoes-brasil-2026
+          cat eleicoes-brasil-2026-standalone.part.* > eleicoes-brasil-2026/index.html
+      - name: Commit published site
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add eleicoes-brasil-2026
+          git add eleicoes-brasil-2026/index.html
           if git diff --cached --quiet; then
             echo "No changes to publish"
             exit 0
