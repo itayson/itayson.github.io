@@ -1,0 +1,12 @@
+ntrolRules({ loadMunicipalities:false });
+  els.dataSourceBadge.textContent = DEMO ? 'Dados simulados' : isWorkerEnabled() ? 'Cloudflare Worker' : 'Fonte direta';
+  els.liveLabel.textContent = DEMO ? 'Ambiente de demonstração' : 'Acompanhamento em tempo real';
+  // Standalone build: service worker disabled for single-file deployment.
+  await load({ manual:true });
+}
+
+init();
+
+</script>
+</body>
+</html>
