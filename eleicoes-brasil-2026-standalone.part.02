@@ -1,0 +1,423 @@
+hartLegend" class="chart-legend"></div>
+        <div class="chart-shell">
+          <canvas id="candidatesChart" height="360" aria-label="Gráfico de evolução percentual dos candidatos"></canvas>
+          <div id="candidatesChartEmpty" class="chart-empty hidden">Ainda não há pontos suficientes para desenhar a evolução.</div>
+        </div>
+      </section>
+    </section>
+
+    <section id="tab-eleitos" class="tab-panel">
+      <section class="card elected-card">
+        <header class="section-head compact">
+          <div>
+            <p class="section-kicker">Situação oficial</p>
+            <h2>Candidatos marcados como eleitos</h2>
+            <p>Para Governador, Senador e Deputado Federal, o painel também tenta consultar o arquivo nacional EA10 de eleitos; nas demais consultas usa a marcação oficial do resultado unificado.</p>
+          </div>
+          <div class="button-row">
+            <button id="loadElectedButton" class="secondary-button" type="button">Carregar cargos da UF</button>
+            <button id="loadNationalElectedButton" class="secondary-button" type="button">Arquivo nacional de eleitos</button>
+          </div>
+        </header>
+        <div id="electedNotice" class="inline-status">A consulta atual será usada como referência. Para cargos estaduais, você pode carregar todos os cargos da UF selecionada.</div>
+        <div id="electedGrid" class="elected-grid"></div>
+      </section>
+    </section>
+
+    <section class="info-grid">
+      <article class="card info-card">
+        <p class="section-kicker">Fonte</p>
+        <h2>Justiça Eleitoral</h2>
+        <p>O site consulta os arquivos JSON públicos do TSE. A camada Cloudflare é opcional e não altera votos: apenas valida parâmetros, aplica cache curto e reduz repetição de chamadas.</p>
+      </article>
+      <article class="card info-card">
+        <p class="section-kicker">Atualização</p>
+        <h2>Polling controlado</h2>
+        <p>A consulta principal atualiza automaticamente a cada 30 segundos. O comparativo de 27 UFs só é carregado sob demanda.</p>
+      </article>
+      <article class="card info-card">
+        <p class="section-kicker">Neutralidade</p>
+        <h2>Sem projeção</h2>
+        <p>O painel não produz previsão de resultado, chance de vitória, ranking editorial ou recomendação política. Apenas organiza dados reportados.</p>
+      </article>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div>
+      <strong>Eleições Brasil 2026</strong>
+      <span>Projeto independente. Não é um produto oficial do TSE.</span>
+    </div>
+    <div>
+      <a href="https://www.tse.jus.br/eleicoes/informacoes-tecnicas-sobre-a-divulgacao-de-resultados" target="_blank" rel="noopener noreferrer">Documentação técnica</a>
+      <a href="https://dadosabertos.tse.jus.br/" target="_blank" rel="noopener noreferrer">Dados abertos</a>
+    </div>
+  </footer>
+
+  <template id="candidateTemplate">
+    <article class="candidate-card">
+      <div class="candidate-photo-wrap">
+        <img class="candidate-photo" alt="" loading="lazy">
+        <div class="candidate-placeholder" aria-hidden="true">—</div>
+      </div>
+      <div class="candidate-main">
+        <div class="candidate-heading">
+          <div>
+            <div class="candidate-meta"><span class="candidate-number"></span><span class="candidate-party"></span></div>
+            <h3 class="candidate-name"></h3>
+            <p class="candidate-vice"></p>
+          </div>
+          <div class="candidate-score"><strong></strong><span></span></div>
+        </div>
+        <div class="progress candidate-progress"><div class="progress-bar"></div></div>
+        <div class="candidate-footer"><span class="candidate-status"></span><span class="candidate-coalition"></span></div>
+      </div>
+    </article>
+  </template>
+
+  <script>
+
+/* === config.js === */
+window.ELEICOES_APP_CONFIG = Object.freeze({
+  // Ex.: 'https://eleicoes-api.seu-subdominio.workers.dev'
+  // Deixe vazio para consultar o TSE diretamente do navegador.
+  workerBase: '',
+  pollMs: 30000,
+});
+
+
+/* === tse.js === */
+const TSE_BASE = 'https://resultados.tse.jus.br/oficial';
+const CYCLE = 'ele2026';
+const ELECTION_CONFIG_URL = `${TSE_BASE}/comum/config/ele-c.json`;
+const ELECTIONS = Object.freeze({
+  federal: { 1: '6257', 2: '6258' },
+  estadual: { 1: '6259', 2: '6260' },
+});
+const OFFICES = Object.freeze({
+  1: { name: 'Presidente', election: 'federal', secondRound: true },
+  3: { name: 'Governador', election: 'estadual', secondRound: true },
+  5: { name: 'Senador', election: 'estadual' },
+  6: { name: 'Deputado Federal', election: 'estadual' },
+  7: { name: 'Deputado Estadual', election: 'estadual' },
+  8: { name: 'Deputado Distrital', election: 'estadual', only: 'DF' },
+});
+const STATES = Object.freeze([
+  ['AC','Acre'],['AL','Alagoas'],['AP','Amapá'],['AM','Amazonas'],['BA','Bahia'],['CE','Ceará'],['DF','Distrito Federal'],['ES','Espírito Santo'],['GO','Goiás'],['MA','Maranhão'],['MT','Mato Grosso'],['MS','Mato Grosso do Sul'],['MG','Minas Gerais'],['PA','Pará'],['PB','Paraíba'],['PR','Paraná'],['PE','Pernambuco'],['PI','Piauí'],['RJ','Rio de Janeiro'],['RN','Rio Grande do Norte'],['RS','Rio Grande do Sul'],['RO','Rondônia'],['RR','Roraima'],['SC','Santa Catarina'],['SP','São Paulo'],['SE','Sergipe'],['TO','Tocantins'],
+]);
+
+const APP_CONFIG = window.ELEICOES_APP_CONFIG || {};
+const workerBase = String(APP_CONFIG.workerBase || '').replace(/\/$/, '');
+
+const nf = new Intl.NumberFormat('pt-BR');
+const pf = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+function num(value) {
+  const n = Number(value ?? 0);
+  return Number.isFinite(n) ? n : 0;
+}
+function pct(value) { return num(String(value ?? '0').replace(',', '.')); }
+function fmtInt(value) { return nf.format(num(value)); }
+function fmtPct(value) { return `${pf.format(pct(value))}%`; }
+function officeName(id) { return OFFICES[id]?.name || `Cargo ${id}`; }
+function stateName(code) { return STATES.find(([uf]) => uf === code)?.[1] || code; }
+function queryKey({ turn, office, scope, uf, municipality }) {
+  return [turn, office, scope, uf || 'BR', municipality || ''].join(':');
+}
+
+function electionCode(office, turn) {
+  const cfg = OFFICES[office];
+  if (!cfg) throw new Error('Cargo inválido.');
+  if (Number(turn) === 2 && !cfg.secondRound) throw new Error(`${cfg.name} não possui 2º turno.`);
+  return ELECTIONS[cfg.election]?.[turn];
+}
+
+function buildScope({ office, scope, uf, municipality }) {
+  if (scope === 'br') {
+    if (Number(office) !== 1) throw new Error('A abrangência Brasil é válida apenas para Presidente.');
+    return 'br';
+  }
+  const state = String(uf || '').toLowerCase();
+  if (!/^[a-z]{2}$/.test(state)) throw new Error('UF inválida.');
+  if (scope === 'municipio') {
+    const mun = String(municipality || '').padStart(5, '0');
+    if (!/^\d{5}$/.test(mun)) throw new Error('Município inválido.');
+    return `${state}${mun}`;
+  }
+  return state;
+}
+
+function buildResultUrl(params) {
+  const office = Number(params.office);
+  const turn = Number(params.turn);
+  const election = electionCode(office, turn);
+  if (!election) throw new Error('Turno ainda não configurado para este cargo.');
+  const scopeCode = buildScope(params);
+  const folder = params.scope === 'br' ? 'br' : String(params.uf).toLowerCase();
+  const cargo = String(office).padStart(4, '0');
+  const ele = String(election).padStart(6, '0');
+  return `${TSE_BASE}/${CYCLE}/${election}/dados/${folder}/${scopeCode}-c${cargo}-e${ele}-u.json`;
+}
+
+function buildMunicipalityConfigUrl({ office, turn }) {
+  const election = electionCode(Number(office), Number(turn));
+  const ele = String(election).padStart(6, '0');
+  return `${TSE_BASE}/${CYCLE}/${election}/config/mun-e${ele}-cm.json`;
+}
+
+function buildPhotoUrl({ office, turn, uf, sqcand }) {
+  const election = electionCode(Number(office), Number(turn));
+  const folder = Number(office) === 1 ? 'br' : String(uf || '').toLowerCase();
+  return `${TSE_BASE}/${CYCLE}/${election}/fotos/${folder}/${sqcand}.jpeg`;
+}
+
+function workerUrl(path, params) {
+  if (!workerBase) return '';
+  const url = new URL(`${workerBase}${path}`);
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, String(v));
+  });
+  return url.toString();
+}
+
+async function fetchJson(url, { signal } = {}) {
+  const response = await fetch(url, { cache: 'no-store', signal, headers: { Accept: 'application/json' } });
+  if (response.status === 404 || response.status === 403) {
+    const error = new Error('Resultado ainda não disponível para esta consulta.');
+    error.code = 'NOT_AVAILABLE';
+    throw error;
+  }
+  if (!response.ok) throw new Error(`Fonte respondeu com status ${response.status}.`);
+  return response.json();
+}
+
+function candidateOutcome(cand, office, turn) {
+  const attributed = cand.e === 's';
+  const status = String(cand.st || '');
+  const majoritarianRunoff = [1, 3].includes(Number(office)) && Number(turn) === 1;
+  const runoff = attributed && majoritarianRunoff && /(2\s*[ºo°]?\s*turno|segundo\s+turno)/i.test(status);
+  const elected = attributed && !runoff && (
+    [5, 6, 7, 8].includes(Number(office)) || Number(turn) === 2 || /eleit/i.test(status)
+  );
+  return { attributed, elected, runoff };
+}
+
+function normalizeResult(raw, params) {
+  const office = Number(params.office);
+  const cargo = (raw.carg || []).find(x => Number(x.cd) === office) || (raw.carg || [])[0] || { agr: [], nmn: officeName(office), nv: '0' };
+  const candidates = [];
+  for (const group of cargo.agr || []) {
+    const coalition = group.tp === 'c' ? (group.nm || '') : '';
+    for (const party of group.par || []) {
+      for (const cand of party.cand || []) {
+        const outcome = candidateOutcome(cand, office, Number(params.turn));
+        candidates.push({
+          sqcand: cand.sqcand || '',
+          number: cand.n || '',
+          name: cand.nmu || cand.nm || 'Nome não informado',
+          fullName: cand.nm || '',
+          party: party.sg || '',
+          coalition,
+          votes: num(cand.vap),
+          percent: pct(cand.pvap),
+          attributed: outcome.attributed,
+          elected: outcome.elected,
+          runoff: outcome.runoff,
+          status: cand.st || '',
+          vices: (cand.vs || []).map(v => ({ name: v.nmu || v.nm || '', party: v.sgp || '', type: v.tp || '' })),
+          photo: cand.sqcand ? buildPhotoUrl({ ...params, sqcand: cand.sqcand }) : '',
+        });
+      }
+    }
+  }
+  candidates.sort((a, b) => b.votes - a.votes || a.name.localeCompare(b.name, 'pt-BR'));
+
+  return {
+    office,
+    officeName: cargo.nmn || officeName(office),
+    scopeCode: raw.cdabr || buildScope(params),
+    seats: num(cargo.nv),
+    generatedAt: [raw.dg, raw.hg].filter(Boolean).join(' '),
+    final: raw.tf === 's',
+    sections: { total: num(raw.s?.ts), counted: num(raw.s?.st), percent: pct(raw.s?.pst) },
+    electorate: {
+      total: num(raw.e?.te), turnout: num(raw.e?.c), turnoutPct: pct(raw.e?.pc),
+      abstention: num(raw.e?.a), abstentionPct: pct(raw.e?.pa),
+    },
+    votes: {
+      total: num(raw.v?.tv), valid: num(raw.v?.vv), blank: num(raw.v?.vb), blankPct: pct(raw.v?.pvb),
+      null: num(raw.v?.tvn), nullPct: pct(raw.v?.ptvn),
+    },
+    candidates,
+    rawId: raw.idg || '',
+  };
+}
+
+async function fetchResult(params, options = {}) {
+  const viaWorker = workerUrl('/api/result', {
+    turn: params.turn, office: params.office, scope: params.scope, uf: params.uf, municipality: params.municipality,
+  });
+  const raw = await fetchJson(viaWorker || buildResultUrl(params), options);
+  return normalizeResult(raw, params);
+}
+
+async function fetchMunicipalities({ office, turn, uf }, options = {}) {
+  const viaWorker = workerUrl('/api/municipalities', { office, turn, uf });
+  if (viaWorker) {
+    const data = await fetchJson(viaWorker, options);
+    return Array.isArray(data.municipalities) ? data.municipalities : [];
+  }
+  const raw = await fetchJson(buildMunicipalityConfigUrl({ office, turn }), options);
+  const group = (raw.abr || []).find(x => String(x.cd).toUpperCase() === String(uf).toUpperCase());
+  return (group?.mu || []).map(m => ({ code: String(m.cd).padStart(5, '0'), ibge: m.cdi || '', name: m.nm || m.cd, capital: m.c === 's' }));
+}
+
+async function fetchElectionConfig(options = {}) {
+  return fetchJson(ELECTION_CONFIG_URL, options);
+}
+
+function hasElectionCode(node, code) {
+  if (!node || typeof node !== 'object') return false;
+  if (!Array.isArray(node) && String(node.cd || '') === String(code)) return true;
+  return Object.values(node).some(value => value && typeof value === 'object' && hasElectionCode(value, code));
+}
+
+async function ensureBatchElectionPublished(office, turn, options = {}) {
+  if (Number(turn) !== 2) return true;
+  const election = electionCode(Number(office), Number(turn));
+  const config = await fetchElectionConfig(options);
+  if (!hasElectionCode(config, election)) {
+    const error = new Error('2º turno ainda não publicado no arquivo oficial de configuração do TSE.');
+    error.code = 'ELECTION_NOT_PUBLISHED';
+    throw error;
+  }
+  return true;
+}
+
+async function fetchStateComparison({ office, turn }, { signal, onProgress } = {}) {
+  await ensureBatchElectionPublished(office, turn, { signal });
+  const viaWorker = workerUrl('/api/compare', { office, turn });
+  if (viaWorker) {
+    const data = await fetchJson(viaWorker, { signal });
+    return data.states || [];
+  }
+
+  const states = STATES.map(([uf]) => uf);
+  const results = [];
+  const concurrency = 5;
+  let cursor = 0;
+  let done = 0;
+  async function runner() {
+    while (cursor < states.length) {
+      const index = cursor++;
+      const uf = states[index];
+      try {
+        if (Number(office) === 8 && uf !== 'DF') {
+          results[index] = { uf, error: 'NOT_APPLICABLE' };
+          continue;
+        }
+        const result = await fetchResult({ turn, office, scope: 'uf', uf }, { signal });
+        results[index] = summarizeState(uf, result);
+      } catch (error) {
+        results[index] = { uf, error: error.code || 'FETCH_ERROR' };
+      } finally {
+        done += 1;
+        onProgress?.(done, states.length);
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: concurrency }, runner));
+  return results.filter(Boolean);
+}
+
+function summarizeState(uf, result) {
+  const top = result.candidates.slice(0, 3).map(c => ({
+    name: c.name, party: c.party, number: c.number, votes: c.votes, percent: c.percent, attributed:c.attributed, elected: c.elected, runoff:c.runoff, status:c.status,
+  }));
+  return {
+    uf,
+    state: stateName(uf),
+    generatedAt: result.generatedAt,
+    final: result.final,
+    sectionsPct: result.sections.percent,
+    validVotes: result.votes.valid,
+    top,
+    candidates: result.candidates.map(c => ({ name:c.name, party:c.party, number:c.number, votes:c.votes, percent:c.percent, attributed:c.attributed, elected:c.elected, runoff:c.runoff, status:c.status })),
+  };
+}
+
+async function fetchRemoteHistory(key, options = {}) {
+  const url = workerUrl('/api/history', { key });
+  if (!url) return [];
+  try {
+    const data = await fetchJson(url, options);
+    return Array.isArray(data.snapshots) ? data.snapshots : [];
+  } catch {
+    return [];
+  }
+}
+
+function buildElectedUrl({ office, turn = 1 }) {
+  const id = Number(office);
+  if (![3,5,6].includes(id)) throw new Error('Arquivo nacional de eleitos disponível apenas para Governador, Senador e Deputado Federal.');
+  const election = electionCode(id, Number(turn));
+  const cargo = String(id).padStart(4, '0');
+  const ele = String(election).padStart(6, '0');
+  return `${TSE_BASE}/${CYCLE}/${election}/dados/br/br-c${cargo}-e${ele}-e.json`;
+}
+
+function normalizeElected(raw, office) {
+  const seen = new Set();
+  const rows = [];
+  const scopes = Array.isArray(raw?.abr) ? raw.abr : [];
+  for (const scope of scopes) {
+    const uf = String(scope.cdabr || '').toUpperCase();
+    for (const c of scope.cand || []) {
+      const row = {
+        sqcand: String(c.sqcand || ''),
+        number: String(c.n || ''),
+        name: c.nmu || c.nm || 'Nome não informado',
+        fullName: c.nm || '',
+        party: c.sgp || '',
+        uf,
+        scopeName: scope.nmabr || '',
+        votes: num(c.vap),
+        percent: pct(c.pvap),
+        status: c.st || 'ELEITO',
+        vices: (c.vs || []).map(v => ({ name:v.nmu || v.nm || '', party:v.sgp || '', type:v.tp || '' })),
+        office: Number(office),
+      };
+      const key = row.sqcand || `${row.uf}:${row.number}:${row.name}`;
+      if (!seen.has(key)) { seen.add(key); rows.push(row); }
+    }
+  }
+  return rows;
+}
+
+async function fetchElected({ office, turn = 1 }, options = {}) {
+  const viaWorker = workerUrl('/api/elected', { office, turn });
+  const raw = await fetchJson(viaWorker || buildElectedUrl({ office, turn }), options);
+  if (Array.isArray(raw.elected)) return raw.elected;
+  return normalizeElected(raw, office);
+}
+
+async function fetchMunicipalityRanking(
+  { office, turn, uf, candidateSq, start = 0, count = 30, municipalities },
+  { signal, onProgress } = {},
+) {
+  const list = municipalities || await fetchMunicipalities({ office, turn, uf }, { signal });
+  const slice = list.slice(start, start + count);
+  const rows = new Array(slice.length);
+  let cursor = 0, done = 0;
+  const concurrency = 5;
+  async function runner() {
+    while (cursor < slice.length) {
+      if (signal?.aborted) throw new DOMException('Abortado', 'AbortError');
+      const index = cursor++;
+      const municipality = slice[index];
+      try {
+        const result = await fetchResult({ turn, office, scope:'municipio', uf, municipality:municipality.code }, { signal });
+        const candidate = result.candidates.find(c => c.sqcand === candidateSq);
+        rows[index] = {
+          code:municipality.code, ibge:municipality.ibge || '', name:municipality.name, capital:Boolean(municipality.capital),
+          votes:candidate?.votes || 0, percent:candidate?.percent || 0, sectionsPct:result.sec
