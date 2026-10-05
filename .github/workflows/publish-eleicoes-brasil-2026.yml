@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "eleicoes-brasil-2026-standalone.part.*"
+      - "eleicoes-brasil-2026-standalone.ready"
 
 permissions:
   contents: write
@@ -20,6 +20,7 @@ jobs:
           set -euo pipefail
           mkdir -p eleicoes-brasil-2026
           cat eleicoes-brasil-2026-standalone.part.* > eleicoes-brasil-2026/index.html
+          test "$(wc -c < eleicoes-brasil-2026/index.html)" -eq 108815
       - name: Commit published site
         shell: bash
         run: |
