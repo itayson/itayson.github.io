@@ -1,0 +1,26 @@
+name: PS4 WebKit firmware routing
+on:
+  pull_request:
+    paths:
+      - 'webkit/**'
+      - '.github/workflows/ps4-webkit-routing.yml'
+  push:
+    branches:
+      - 'feature/ps4-webkit-1352-*'
+    paths:
+      - 'webkit/**'
+      - '.github/workflows/ps4-webkit-routing.yml'
+jobs:
+  firmware-routing:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check webkit/host-config.js
+      - run: node --check webkit/router.js
+      - run: node --check webkit/vendor/raw13g/jb.js
+      - run: node --test webkit/tests/host-routing.test.cjs
