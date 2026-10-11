@@ -160,6 +160,13 @@
         if (started) return;
         started = true;
 
+        if (currentFamily.nativeCache) {
+            setCacheDetail("Separate AppCache", "success");
+            setStatus("PS4 " + currentFirmware + " · starting 13.x firmware-specific module", "success");
+            window.location.replace(currentFamily.entry);
+            return;
+        }
+
         payloadLabel = config.payload && config.payload.label ? config.payload.label : "GoldHEN";
         setCacheDetail("Ready", "success");
         setStatus(
@@ -296,6 +303,14 @@
                 " is not enabled for automatic loading.",
                 "warning"
             );
+            return;
+        }
+
+        // The 13.x loader owns an independent AppCache, offsets and payloads.
+        // Do not clear or reuse the existing V9 exploit cache or payload.
+        if (currentFamily.nativeCache) {
+            setCacheDetail("Separate AppCache", "success");
+            startExploit();
             return;
         }
 
