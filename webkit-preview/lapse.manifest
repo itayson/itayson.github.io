@@ -1,0 +1,26 @@
+CACHE MANIFEST
+# Preview 20261011
+# Tayson Lapse cache 20260906-L12
+
+CACHE:
+index.html
+host-config.js?v=20261011-preview1
+router.js?v=20261011-preview1
+style.css
+diagnostics.html
+recovery.html
+self-test.html
+licenses.html
+cache_lapse.html?v=20261011-preview1
+chain_lapse.js
+core.js?v=10
+mem.js
+int64.js
+ps4_offsets.js
+rpc_worker.js
+payload.bin
+patches/1150.bin
+patches/1200.bin
+
+NETWORK:
+*

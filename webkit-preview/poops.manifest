@@ -1,0 +1,26 @@
+CACHE MANIFEST
+# Preview 20261011
+# Tayson Poops cache 20260906-P12
+
+CACHE:
+index.html
+host-config.js?v=20261011-preview1
+router.js?v=20261011-preview1
+style.css
+diagnostics.html
+recovery.html
+self-test.html
+licenses.html
+cache_poops.html?v=20261011-preview1
+chain_poops.js
+core.js?v=10
+mem.js
+int64.js
+ps4_offsets.js
+rpc_worker.js
+payload.bin
+patches/1250.bin
+patches/1300.bin
+
+NETWORK:
+*
