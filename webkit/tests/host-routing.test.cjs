@@ -35,9 +35,13 @@ test("firmware-specific payload and kernel patches exist and differ", () => {
   const required = ["index.html", "jb.html", "jb.js", "ps4_offsets.js", "core.js", "mem.js", "int64.js", "rpc_worker.js", "cache.appcache", "LICENSE", "hen.bin", "goldhen.bin", "patches/1302.bin", "patches/1350.bin", "patches/1352.bin"];
   for (const p of required) assert.ok(fs.statSync(path.join(dir, p)).size > 0, p);
   assert.notDeepEqual(fs.readFileSync(path.join(dir, "hen.bin")), fs.readFileSync(path.join(dir, "goldhen.bin")));
+  const crypto = require("node:crypto");
+  const blob = fs.readFileSync(path.join(dir, "goldhen.bin"));
+  const gitObject = Buffer.concat([Buffer.from("blob " + blob.length + "\0", "utf8"), blob]);
+  assert.equal(crypto.createHash("sha1").update(gitObject).digest("hex"), "b9c254cb5171f82d8824794c184b968e5c604b24");
   const offsets = fs.readFileSync(path.join(dir, "ps4_offsets.js"), "utf8");
   assert.match(offsets, /payload:\s*"goldhen\.bin"/);
-  assert.match(offsets, /payload:\s*"hen\.bin"/);
+  assert.equal((offsets.match(/payload:\s*"goldhen\.bin"/g) || []).length, 4);
   const manifest = fs.readFileSync(path.join(dir, "cache.appcache"), "utf8");
   assert.match(manifest, /^hen\.bin/m);
   assert.match(manifest, /^goldhen\.bin/m);
