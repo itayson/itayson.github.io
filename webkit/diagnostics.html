@@ -73,7 +73,7 @@
     }
 
     set("diag-release", config ? config.release : "Unavailable");
-    set("diag-payload", family && family.nativeCache ? (fw === "13.52" ? "GoldHEN (13.52 specific)" : "PS4-HEN (13.x specific)") : (config && config.payload ? config.payload.label : "Unavailable"));
+    set("diag-payload", family && family.nativeCache ? "GoldHEN (13.xx candidate; physical test pending)" : (config && config.payload ? config.payload.label : "Unavailable"));
     set("diag-runtime", config && config.runtimeProfile === "low-memory" ? "Low-memory" : "Standard");
     set("diag-device", fw ? "PlayStation 4" : "Not a PS4");
     set("diag-fw", fw || "Unknown");
