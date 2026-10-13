@@ -23,7 +23,7 @@ Only explicitly enumerated firmwares run the 13.xx module; there is no wildcard 
 
 ## Test protocol — before publishing
 
-1. `node --test webkit/tests/host-routing.test.cjs` checks route whitelist, module manifests, binary presence and payload separation.
+1. `node --test webkit-preview/tests/*.test.cjs` checks route whitelist, module manifests, binary presence and payload separation.
 2. On the original FW 12.02 test that Lapse+V9 still launches, with and without network after cache install.
 3. On a FW 13.52 console open the host, confirm nested cache and successful GoldHEN load; check reboots, rest mode and crash logs. The embedded binary's exact SiSTR0 release version is **not established here**; validate against the official release before production deployment.
 4. On 13.02 / 13.04 / 13.50, confirm the candidate newer GoldHEN is invoked instead of incorrectly attempting V9; check rest mode and crash logs.
@@ -33,3 +33,7 @@ Only explicitly enumerated firmwares run the 13.xx module; there is no wildcard 
 ## Status
 
 Code integration only. Static tests do not prove live exploit reliability or firmware safety. Branch must be reviewed and tested physically before merging into the GitHub Pages public host.
+
+## Atualização 2026-10-13
+
+Ver `PREVIEW_CHANGES.md` para correções de cache/recarga. A preview pode ser publicada para testes manuais; isso não promove a cadeia à produção `/webkit/` nem comprova estabilidade física.

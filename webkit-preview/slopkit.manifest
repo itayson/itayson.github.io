@@ -1,10 +1,12 @@
 CACHE MANIFEST
-# Tayson compatibility shell 20260906-22
+# Tayson compatibility shell 20261013-preview2
 
 CACHE:
 index.html
 host-config.js
+host-config.js?v=20261013-preview2
 router.js
+router.js?v=20261013-preview2
 style.css
 diagnostics.html
 recovery.html
