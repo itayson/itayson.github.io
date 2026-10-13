@@ -49,7 +49,7 @@
     </main>
 </div>
 
-<script src="host-config.js?v=20261013-preview2"></script>
+<script src="host-config.js?v=20261013-preview3"></script>
 <script>
 (function () {
     "use strict";
@@ -80,8 +80,13 @@
     set("diag-family", family ? family.label : (route ? route.family : "None"));
 
     if (route && route.verified) {
-        set("diag-tier", family && family.nativeCache ? "Upstream 13.x chain · console validation pending" : "Verified auto-run");
-        set("diag-note", "This firmware is enabled for automatic loading in this host.");
+        if (family && family.nativeCache) {
+            set("diag-tier", "Experimental · manual launch");
+            set("diag-note", "This exact firmware is routed to a manual 13.x test; successful hardware execution is not confirmed here.");
+        } else {
+            set("diag-tier", "Auto-run configured · not hardware-certified");
+            set("diag-note", "The router enables this chain automatically; this screen cannot verify exploit execution or GoldHEN status.");
+        }
     } else if (route && route.experimental) {
         set("diag-tier", "Experimental manual");
         set("diag-note", "This firmware can be tested manually but will never auto-run until hardware validation is confirmed.");
@@ -107,7 +112,7 @@
         set(
             "diag-cache",
             build === family.cacheBuild ?
-                ("Ready · " + build) :
+                ("Stored build (unverified) · " + build) :
                 (build ? ("Outdated · " + build) : "Not installed")
         );
         set("diag-attempts", attempts || "0");
@@ -120,7 +125,7 @@
     }
 
     set("diag-error", readLocal(LAST_ERROR_KEY) || "None");
-    set("diag-network", navigator.onLine === false ? "Offline" : "Online");
+    set("diag-network", navigator.onLine === false ? "Browser reports offline" : "Browser reports online · unverified");
 }());
 </script>
 </body>
