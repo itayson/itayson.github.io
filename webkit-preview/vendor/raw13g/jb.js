@@ -2,6 +2,7 @@ import { establishPrimitive } from "./core.js?v=10";
 import { installWindowP, pairStatus } from "./mem.js";
 import { int64 } from "./int64.js";
 import { offsetsFor } from "./ps4_offsets.js";
+import { createReloadBudget } from "./reload-budget.js";
 
 const outEl = document.getElementById("out");
 const stateEl = document.getElementById("state");
@@ -235,48 +236,27 @@ let allDone = false,
     // A hard KP (a total reclaim miss that faults inside the cancel walk)
     // cannot be caught here and still needs a reboot -- this only recovers
     // the benign, detectable misses.
-    const RETRY_MAX = params.get("retry")
-      ? parseInt(params.get("retry"), 10)
-      : 8;
-    const RETRY_KEY = "jb1352-read-retry";
-    const retryCount = () => {
-      try {
-        return parseInt(sessionStorage.getItem(RETRY_KEY) || "0", 10) || 0;
-      } catch (e) {
-        return 0;
-      }
-    };
-    const clearRetry = () => {
-      try {
-        sessionStorage.removeItem(RETRY_KEY);
-      } catch (e) {}
-    };
+    const retryBudget = createReloadBudget(
+      () => sessionStorage,
+      "tayson-preview-13xx-read-retry:" + location.pathname + ":" + key,
+      params.get("retry"),
+    );
+    const RETRY_MAX = retryBudget.limit;
+    const retryCount = () => retryBudget.count();
+    const clearRetry = () => retryBudget.clear();
     const retryBenign = (why) => {
-      const n = retryCount();
-      if (n >= RETRY_MAX) {
-        mark(
-          "AUTO-RETRY-GIVEUP",
-          "why=" + why + " after " + n + " reloads -- reboot and try again",
-        );
+      const ticket = retryBudget.reserve();
+      if (!ticket.allowed) {
+        mark("AUTO-RETRY-BLOCKED", "why=" + why + " reason=" + ticket.reason);
         return false;
       }
-      try {
-        sessionStorage.setItem(RETRY_KEY, String(n + 1));
-      } catch (e) {}
       mark(
         "AUTO-RETRY",
-        "why=" +
-          why +
-          " reload " +
-          (n + 1) +
-          "/" +
-          RETRY_MAX +
-          " (benign read miss, no kernel write yet)",
+        "why=" + why + " reload " + ticket.count + "/" + RETRY_MAX
+          + " (benign read miss, no kernel write yet)",
       );
       setTimeout(() => {
-        try {
-          location.reload();
-        } catch (e) {}
+        try { location.reload(); } catch (e) {}
       }, 400);
       return true;
     };

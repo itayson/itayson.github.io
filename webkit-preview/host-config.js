@@ -7,7 +7,7 @@
         return (parseInt(m[1], 10) * 100) + parseInt(m[2], 10);
     }
     var cfg = {
-        release: "20261011-preview1",
+        release: "20261013-preview2",
         maxRepairAttempts: 2,
         runtimeProfile: "low-memory",
         payload: {
@@ -16,6 +16,8 @@
             bytes: 291808,
             sha256: "ab1849d66816a9f4a3d155b06b51cdc5eb07a7fc5bd4333c90e3af74f802b2b2"
         },
+        // Legacy field "verified" enables a route; it is not hardware evidence.
+        // Physical validation status is documented separately in PREVIEW_CHANGES.md.
         routes: {
             "11.50": { verified: true, family: "lapse" },
             "12.00": { verified: true, family: "lapse" },
@@ -33,10 +35,10 @@
             { min: 1000, max: 1102, verified: true, family: "css" }
         ],
         families: {
-            psfree: { label: "PSFree + Lapse", entry: "vendor/psfree/alert.mjs", cachePage: "cache_psfree.html?v=20260906-22", manifest: "psfree.manifest", cacheKey: "tayson_preview_cache_psfree_build", cacheBuild: "20260906-PS10-TEST" },
-            css: { label: "CSSFontFace + Lapse", entry: "vendor/css/src/main.js", cachePage: "cache_css.html?v=20260906-22", manifest: "css.manifest", cacheKey: "tayson_preview_cache_css_build", cacheBuild: "20260906-C10-TEST" },
-            lapse: { label: "Lapse", entry: "chain_lapse.js", cachePage: "cache_lapse.html?v=20260906-22", manifest: "lapse.manifest", cacheKey: "tayson_preview_cache_lapse_build", cacheBuild: "20260906-L12-TEST" },
-            poops: { label: "Poops", entry: "chain_poops.js", cachePage: "cache_poops.html?v=20260906-22", manifest: "poops.manifest", cacheKey: "tayson_preview_cache_poops_build", cacheBuild: "20260906-P12-TEST" },
+            psfree: { label: "PSFree + Lapse", entry: "vendor/psfree/alert.mjs", cachePage: "cache_psfree.html?v=20261013-preview2", manifest: "psfree.manifest", cacheKey: "tayson_preview_cache_psfree_build", cacheBuild: "20261013-preview2-PS10" },
+            css: { label: "CSSFontFace + Lapse", entry: "vendor/css/src/main.js", cachePage: "cache_css.html?v=20261013-preview2", manifest: "css.manifest", cacheKey: "tayson_preview_cache_css_build", cacheBuild: "20261013-preview2-C10" },
+            lapse: { label: "Lapse", entry: "chain_lapse.js", cachePage: "cache_lapse.html?v=20261013-preview2", manifest: "lapse.manifest", cacheKey: "tayson_preview_cache_lapse_build", cacheBuild: "20261013-preview2-L12" },
+            poops: { label: "Poops", entry: "chain_poops.js", cachePage: "cache_poops.html?v=20261013-preview2", manifest: "poops.manifest", cacheKey: "tayson_preview_cache_poops_build", cacheBuild: "20261013-preview2-P12" },
             // Separate AppCache and firmware-specific payload; no legacy GoldHEN V9 reuse.
             raw13g: { label: "WebKit + Netctrl 13.x", entry: "vendor/raw13g/index.html", nativeCache: true }
         }

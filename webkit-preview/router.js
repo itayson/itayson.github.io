@@ -44,7 +44,10 @@
     }
 
     function writeLocal(key, value) {
-        try { window.localStorage.setItem(key, String(value)); } catch (e) {}
+        try {
+            window.localStorage.setItem(key, String(value));
+            return window.localStorage.getItem(key) === String(value);
+        } catch (e) { return false; }
     }
 
     function removeLocal(key) {
@@ -201,7 +204,11 @@
         }
 
         if (data === readyPrefix) {
-            writeLocal(currentFamily.cacheKey, currentFamily.cacheBuild);
+            if (!writeLocal(currentFamily.cacheKey, currentFamily.cacheBuild)) {
+                cleanupCacheFrame();
+                recovery("CACHE_INSTALL_FAILED", currentFirmware, currentRoute.family, "Cache state could not be saved");
+                return;
+            }
             writeLocal(currentFamily.cacheKey + "_attempts", 0);
             cleanupCacheFrame();
             setCacheDetail("Activating", "loading");
@@ -330,7 +337,9 @@
 
         if (build !== currentFamily.cacheBuild) {
             setCacheDetail(build ? "Outdated" : "Not installed", "warning");
-            attempts = parseInt(readLocal(key), 10) || 0;
+            var savedAttempts = readLocal(key);
+            attempts = savedAttempts === "" ? 0 :
+                (/^(0|[1-9][0-9]*)$/.test(savedAttempts) ? Number(savedAttempts) : config.maxRepairAttempts);
 
             if (attempts >= config.maxRepairAttempts) {
                 setCacheDetail("Repair failed", "error");
@@ -346,7 +355,10 @@
                 return;
             }
 
-            writeLocal(key, attempts + 1);
+            if (!writeLocal(key, attempts + 1)) {
+                recovery("CACHE_INSTALL_FAILED", currentFirmware, currentRoute.family, "Cache attempt counter could not be saved");
+                return;
+            }
             installCache(attempts + 1);
             return;
         }
