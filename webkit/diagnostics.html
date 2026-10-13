@@ -49,7 +49,7 @@
     </main>
 </div>
 
-<script src="host-config.js?v=20260906-22"></script>
+<script src="host-config.js?v=20261011-1352-rc1"></script>
 <script>
 (function () {
     "use strict";
@@ -73,14 +73,14 @@
     }
 
     set("diag-release", config ? config.release : "Unavailable");
-    set("diag-payload", config && config.payload ? config.payload.label : "Unavailable");
+    set("diag-payload", family && family.nativeCache ? "GoldHEN (13.xx candidate; physical test pending)" : (config && config.payload ? config.payload.label : "Unavailable"));
     set("diag-runtime", config && config.runtimeProfile === "low-memory" ? "Low-memory" : "Standard");
     set("diag-device", fw ? "PlayStation 4" : "Not a PS4");
     set("diag-fw", fw || "Unknown");
     set("diag-family", family ? family.label : (route ? route.family : "None"));
 
     if (route && route.verified) {
-        set("diag-tier", "Verified auto-run");
+        set("diag-tier", family && family.nativeCache ? "Upstream 13.x chain · console validation pending" : "Verified auto-run");
         set("diag-note", "This firmware is enabled for automatic loading in this host.");
     } else if (route && route.experimental) {
         set("diag-tier", "Experimental manual");
@@ -96,7 +96,11 @@
         set("diag-note", "Open this page using the PlayStation 4 browser for firmware diagnostics.");
     }
 
-    if (family) {
+    if (family && family.nativeCache) {
+        set("diag-cache", "Separate Application Cache (13.x module)");
+        set("diag-attempts", "Not tracked here");
+        document.getElementById("diag-repair").href = family.entry;
+    } else if (family) {
         var build = readLocal(family.cacheKey);
         var attempts = readLocal(family.cacheKey + "_attempts");
 

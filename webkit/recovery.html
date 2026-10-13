@@ -46,7 +46,7 @@
     </main>
 </div>
 
-<script src="host-config.js?v=20260906-22"></script>
+<script src="host-config.js?v=20261011-1352-rc1"></script>
 <script>
 (function () {
     "use strict";
@@ -130,7 +130,10 @@
         addStep("Return to the host and retry.");
     }
 
-    if (family) {
+    if (family && family.nativeCache) {
+        repairLink.href = family.entry;
+        repairLink.textContent = "Open isolated 13.x module";
+    } else if (family) {
         repairLink.href = "index.html?repair=" + encodeURIComponent(familyKey);
         repairLink.textContent = "Reinstall " + family.label + " cache";
 

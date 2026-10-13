@@ -7,7 +7,7 @@
         return (parseInt(m[1], 10) * 100) + parseInt(m[2], 10);
     }
     var cfg = {
-        release: "20260906-22",
+        release: "20261011-1352-rc1",
         maxRepairAttempts: 2,
         runtimeProfile: "low-memory",
         payload: {
@@ -22,7 +22,11 @@
             "12.02": { verified: true, family: "lapse" },
             "12.50": { verified: true, family: "poops" },
             "12.52": { verified: true, family: "poops" },
-            "13.00": { verified: true, family: "poops" }
+            "13.00": { verified: true, family: "poops" },
+            "13.02": { verified: true, family: "raw13g" },
+            "13.04": { verified: true, family: "raw13g" },
+            "13.50": { verified: true, family: "raw13g" },
+            "13.52": { verified: true, family: "raw13g" }
         },
         rangeRoutes: [
             { min: 700, max: 960, verified: true, family: "psfree" },
@@ -32,7 +36,9 @@
             psfree: { label: "PSFree + Lapse", entry: "vendor/psfree/alert.mjs", cachePage: "cache_psfree.html?v=20260906-22", manifest: "psfree.manifest", cacheKey: "tayson_cache_psfree_build", cacheBuild: "20260906-PS10" },
             css: { label: "CSSFontFace + Lapse", entry: "vendor/css/src/main.js", cachePage: "cache_css.html?v=20260906-22", manifest: "css.manifest", cacheKey: "tayson_cache_css_build", cacheBuild: "20260906-C10" },
             lapse: { label: "Lapse", entry: "chain_lapse.js", cachePage: "cache_lapse.html?v=20260906-22", manifest: "lapse.manifest", cacheKey: "tayson_cache_lapse_build", cacheBuild: "20260906-L12" },
-            poops: { label: "Poops", entry: "chain_poops.js", cachePage: "cache_poops.html?v=20260906-22", manifest: "poops.manifest", cacheKey: "tayson_cache_poops_build", cacheBuild: "20260906-P12" }
+            poops: { label: "Poops", entry: "chain_poops.js", cachePage: "cache_poops.html?v=20260906-22", manifest: "poops.manifest", cacheKey: "tayson_cache_poops_build", cacheBuild: "20260906-P12" },
+            // Separate AppCache and firmware-specific payload; no legacy GoldHEN V9 reuse.
+            raw13g: { label: "WebKit + Netctrl 13.x", entry: "vendor/raw13g/index.html", nativeCache: true }
         }
     };
     cfg.versionNumber = versionNumber;
