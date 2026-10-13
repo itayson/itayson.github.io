@@ -1,0 +1,64 @@
+name: Preview PS4 validation
+
+on:
+  push:
+    branches:
+      - preview3-diagnostics-and-verification-20261013
+    paths:
+      - 'webkit-preview/**'
+      - '.github/workflows/preview-ps4-validation.yml'
+  pull_request:
+    paths:
+      - 'webkit-preview/**'
+      - '.github/workflows/preview-ps4-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-validation:
+    name: PS4 preview static tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Node version
+        run: node --version
+      - name: Run regression tests
+        run: node --test webkit-preview/tests/*.test.cjs
+      - name: Check nested AppCache hashes
+        run: node webkit-preview/tools/refresh-cache-hashes.cjs --check
+      - name: Check JS syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          for source in \
+            webkit-preview/core.js \
+            webkit-preview/host-config.js \
+            webkit-preview/router.js \
+            webkit-preview/vendor/raw13g/reload-budget.js \
+            webkit-preview/tests/host-routing.test.cjs \
+            webkit-preview/tests/preview-reliability.test.cjs \
+            webkit-preview/tests/diagnostics-preview.test.cjs; do
+            node --check "$source"
+          done
+      - name: Ensure PR does not modify production or binary exploit components
+        if: ${{ github.event_name == 'pull_request' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin "${{ github.base_ref }}"
+          git diff --name-only "origin/${{ github.base_ref }}...HEAD" > /tmp/preview-changes.txt
+          cat /tmp/preview-changes.txt
+          if grep -Ev '^(webkit-preview/|\.github/workflows/preview-ps4-validation\.yml$)' /tmp/preview-changes.txt; then
+            echo 'Out-of-scope files were changed.'
+            exit 1
+          fi
+          if grep -E '^webkit-preview/(payload\.bin|patches/|vendor/raw13g/(patches/|goldhen\.bin|hen\.bin|ps4_offsets\.js|jb\.js|mem\.js|core\.js))' /tmp/preview-changes.txt; then
+            echo 'Kernel/payload/primitive changes need a separate review.'
+            exit 1
+          fi
